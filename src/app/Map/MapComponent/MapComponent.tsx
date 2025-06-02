@@ -1,4 +1,5 @@
 'use client';
+
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,7 +7,12 @@ import { useEffect, useState } from 'react';
 import type { LatLngExpression } from 'leaflet';
 
 // Corrige os ícones padrão
-delete (L.Icon.Default as any).prototype._getIconUrl;
+const DefaultIcon = L.Icon.Default as unknown as {
+  prototype: { _getIconUrl?: unknown };
+  mergeOptions: (options: { iconUrl: string; shadowUrl: string }) => void;
+};
+
+delete DefaultIcon.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconUrl: '/marker-icon.png',
   shadowUrl: '/marker-shadow.png',
@@ -34,7 +40,6 @@ export default function MapComponent() {
     setMounted(true);
   }, []);
 
-  // Protege o mapa do SSR
   if (!mounted) {
     return <div style={{ width: '100%', height: '100%' }} />;
   }
@@ -45,9 +50,7 @@ export default function MapComponent() {
       zoom={13}
       style={{ height: '100%', width: '100%', zIndex: 1, position: 'relative' }}
     >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {pontosDeRisco.map((ponto) => (
         <Marker
           key={ponto.id}

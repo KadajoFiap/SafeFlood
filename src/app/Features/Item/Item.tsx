@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
+import Image from 'next/image';
 
 export default function Item({
     imageSrc,
@@ -16,7 +17,13 @@ export default function Item({
 }) {
     return (
         <div className="bg-white rounded-lg shadow-md p-6 transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-            <img src={imageSrc} alt={title} className="w-full h-40 object-cover rounded-md mb-4" />
+            <Image 
+                src={imageSrc} 
+                alt={title} 
+                width={300} 
+                height={200} 
+                className="w-full h-40 object-cover rounded-md mb-4" 
+            />
             <h2 className="text-xl font-semibold text-[#132536] mb-2">{title}</h2>
             <p className="text-gray-600 mb-4">{description}</p>
             <Link href={linkHref} className="text-[#0078D4] hover:underline flex items-center">
