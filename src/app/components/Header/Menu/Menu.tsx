@@ -21,7 +21,7 @@ export default function Menu() {
                 <ul >
                     <div className="flex gap-10">
                         {rotas.map((rota, index) => (
-                            <li key={index} className="text-white">
+                            <li key={index} className="text-[#F5FAFF]">
                                 <Link
                                     href={rota.href}
                                     className="text-white"
