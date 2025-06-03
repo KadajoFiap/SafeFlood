@@ -4,14 +4,14 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 import type { LatLngExpression } from 'leaflet';
+import Image from 'next/image';
 
 // Configuração do ícone padrão do Leaflet
-const DefaultIcon = L.Icon.Default as unknown as {
-  prototype: { _getIconUrl?: unknown };
-  mergeOptions: (options: { iconUrl: string; shadowUrl: string }) => void;
-};
-
-delete DefaultIcon.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // Ícones personalizados por nível de risco
 const getIconForRiskLevel = (nivel: 'Alto' | 'Médio' | 'Baixo') => {
@@ -86,57 +86,38 @@ const UF_COORDENADAS: Record<string, [number, number]> = {
 const center: LatLngExpression = [-15.788, -47.929];
 
 // Função para extrair UF do campo municipios
-const extrairUF = (municipios: string): string => {
-  const regex = / - ([A-Z]{2}) /;
+const extrairUF = (municipios: string | undefined): string => {
+  if (!municipios) return 'BR';
+  // Padrão: "Município - UF"
+  const regex = / - ([A-Z]{2})/;
   const match = municipios.match(regex);
   return match ? match[1] : 'BR';
 };
 
 // Função para extrair o primeiro município
-const extrairPrimeiroMunicipio = (municipios: string): string => {
+const extrairPrimeiroMunicipio = (municipios: string | undefined): string => {
+  if (!municipios) return 'Local não especificado';
   const primeiro = municipios.split(',')[0].trim();
   return primeiro.split(' - ')[0].trim();
 };
 
-// Função para calcular centroide do polígono
-const calcularCentroide = (poligono: string): [number, number] | null => {
+// Função simplificada para calcular centroide
+const calcularCentroide = (poligono: string | undefined): [number, number] | null => {
+  if (!poligono) return null;
+  
   try {
     const geoJson = JSON.parse(poligono);
     
     if (geoJson.type === 'Polygon' && geoJson.coordinates?.length > 0) {
       const coordenadas = geoJson.coordinates[0];
-      let latTotal = 0;
-      let lngTotal = 0;
-      
-      for (const coord of coordenadas) {
-        const [lng, lat] = coord;
-        latTotal += lat;
-        lngTotal += lng;
-      }
-      
-      return [
-        latTotal / coordenadas.length,
-        lngTotal / coordenadas.length
-      ];
+      const primeiroPonto = coordenadas[0];
+      return [primeiroPonto[1], primeiroPonto[0]]; // [lat, lng]
     }
     
-    // Tratar MultiPolygon se necessário
     if (geoJson.type === 'MultiPolygon' && geoJson.coordinates?.length > 0) {
-      const todasCoordenadas = geoJson.coordinates.flat(1);
-      const coordenadas = todasCoordenadas[0];
-      let latTotal = 0;
-      let lngTotal = 0;
-      
-      for (const coord of coordenadas) {
-        const [lng, lat] = coord;
-        latTotal += lat;
-        lngTotal += lng;
-      }
-      
-      return [
-        latTotal / coordenadas.length,
-        lngTotal / coordenadas.length
-      ];
+      const primeiroAnel = geoJson.coordinates[0][0];
+      const primeiroPonto = primeiroAnel[0];
+      return [primeiroPonto[1], primeiroPonto[0]]; // [lat, lng]
     }
   } catch (e) {
     console.error('Erro ao processar polígono:', e);
@@ -149,11 +130,14 @@ export default function MapComponent() {
   const [pontos, setPontos] = useState<PontoDeRisco[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState<LatLngExpression>(center);
 
-  // Função para determinar nível de risco
-  const getNivelRisco = (): 'Alto' | 'Médio' | 'Baixo' => {
-    // Implemente sua lógica real aqui quando tiver dados
-    return 'Médio'; // Valor padrão
+  // Função para determinar nível de risco (simplificada)
+  const getNivelRisco = (severidade: string): 'Alto' | 'Médio' | 'Baixo' => {
+    if (!severidade) return 'Baixo';
+    if (severidade.toLowerCase().includes('perigo')) return 'Alto';
+    if (severidade.toLowerCase().includes('atenção')) return 'Médio';
+    return 'Baixo';
   };
 
   useEffect(() => {
@@ -169,7 +153,17 @@ export default function MapComponent() {
         }
         
         const data = await res.json();
-        const alertas: AlertaAPI[] = data.hoje || [];
+        console.log('Dados da API:', data);
+        
+        // Verificar estrutura real dos dados
+        if (!data || (!data.hoje && !Array.isArray(data))) {
+          console.warn('Formato de dados inválido:', data);
+          setPontos([]);
+          return;
+        }
+        
+        const alertas: any[] = data.hoje || [];
+        console.log('Alertas encontrados:', alertas.length);
         
         const transformados: PontoDeRisco[] = [];
         
@@ -183,35 +177,43 @@ export default function MapComponent() {
               id: alerta.id,
               latitude: centroide[0],
               longitude: centroide[1],
-              nivel: getNivelRisco(),
-              descricao: `Alerta para ${municipio} e região`,
+              nivel: getNivelRisco(alerta.severidade),
+              descricao: alerta.descricao || `Alerta para ${municipio} e região`,
               inicio: alerta.data_inicio,
               fim: alerta.data_fim,
               uf,
               municipio
             });
-          }
-          // Fallback para coordenadas da UF
-          else if (UF_COORDENADAS[uf]) {
+          } else if (UF_COORDENADAS[uf]) {
             transformados.push({
               id: alerta.id,
               latitude: UF_COORDENADAS[uf][0],
               longitude: UF_COORDENADAS[uf][1],
-              nivel: getNivelRisco(),
-              descricao: `Alerta para ${municipio} e região`,
+              nivel: getNivelRisco(alerta.severidade),
+              descricao: alerta.descricao || `Alerta para ${municipio} e região`,
               inicio: alerta.data_inicio,
               fim: alerta.data_fim,
               uf,
               municipio
             });
+          } else {
+            console.warn(`Não foi possível obter coordenadas para alerta ${alerta.id || 'desconhecido'}`);
           }
         }
         
+        console.log('Pontos transformados:', transformados);
         setPontos(transformados);
+        
+        // Se tivermos pontos, centralizar no primeiro
+        if (transformados.length > 0) {
+          setMapCenter([transformados[0].latitude, transformados[0].longitude]);
+        }
+        
         setError(null);
       } catch (err) {
         console.error('Erro ao processar alertas:', err);
         setError('Falha ao carregar alertas meteorológicos');
+        setPontos([]);
       } finally {
         setLoading(false);
       }
@@ -223,6 +225,13 @@ export default function MapComponent() {
     const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Verificar se temos dados para mostrar
+  useEffect(() => {
+    if (pontos.length > 0) {
+      console.log('Marcadores devem estar visíveis:', pontos);
+    }
+  }, [pontos]);
 
   if (!mounted) {
     return <div className="w-full h-full bg-gray-100 animate-pulse" />;
@@ -260,8 +269,8 @@ export default function MapComponent() {
   return (
     <div className="relative w-full h-full">
       <MapContainer 
-        center={center} 
-        zoom={5} 
+        center={mapCenter} 
+        zoom={7} 
         style={{ height: '100%', width: '100%' }}
         minZoom={4}
         maxBounds={[[-35, -75], [5, -30]]}
@@ -272,53 +281,61 @@ export default function MapComponent() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         
-        {pontos.map((ponto) => (
-          <Marker
-            key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}`}
-            position={[ponto.latitude, ponto.longitude]}
-            icon={getIconForRiskLevel(ponto.nivel)}
-          >
-            <Popup>
-              <div className="min-w-[250px]">
-                <h3 className="font-bold text-lg text-gray-800">
-                  {ponto.municipio} - {ponto.uf}
-                </h3>
-                <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${
-                  ponto.nivel === 'Alto' ? 'bg-red-100 text-red-800' : 
-                  ponto.nivel === 'Médio' ? 'bg-orange-100 text-orange-800' : 
-                  'bg-green-100 text-green-800'
-                }`}>
-                  Risco: {ponto.nivel}
-                </div>
-                <p className="mt-2 text-gray-700">{ponto.descricao}</p>
-                
-                <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
-                  <span className="font-medium">Início:</span>
-                  <span>{new Date(ponto.inicio).toLocaleString()}</span>
+        {pontos.length === 0 ? (
+          <div className="leaflet-top leaflet-left">
+            <div className="leaflet-control leaflet-bar bg-white p-4 rounded shadow">
+              <p className="text-gray-700">Nenhum alerta encontrado no momento</p>
+            </div>
+          </div>
+        ) : (
+          pontos.map((ponto) => (
+            <Marker
+              key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}`}
+              position={[ponto.latitude, ponto.longitude]}
+              icon={getIconForRiskLevel(ponto.nivel)}
+            >
+              <Popup>
+                <div className="min-w-[250px]">
+                  <h3 className="font-bold text-lg text-gray-800">
+                    {ponto.municipio} - {ponto.uf}
+                  </h3>
+                  <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${
+                    ponto.nivel === 'Alto' ? 'bg-red-100 text-red-800' : 
+                    ponto.nivel === 'Médio' ? 'bg-orange-100 text-orange-800' : 
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    Risco: {ponto.nivel}
+                  </div>
+                  <p className="mt-2 text-gray-700">{ponto.descricao}</p>
                   
-                  <span className="font-medium">Fim:</span>
-                  <span>{new Date(ponto.fim).toLocaleString()}</span>
-                  
-                  <span className="font-medium">Coordenadas:</span>
-                  <span>{ponto.latitude.toFixed(4)}, {ponto.longitude.toFixed(4)}</span>
+                  <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
+                    <span className="font-medium">Início:</span>
+                    <span>{new Date(ponto.inicio).toLocaleString('pt-BR')}</span>
+                    
+                    <span className="font-medium">Fim:</span>
+                    <span>{new Date(ponto.fim).toLocaleString('pt-BR')}</span>
+                    
+                    <span className="font-medium">Coordenadas:</span>
+                    <span>{ponto.latitude.toFixed(4)}, {ponto.longitude.toFixed(4)}</span>
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          ))
+        )}
       </MapContainer>
       
       <div className="absolute bottom-4 left-4 z-[1000] bg-white p-3 rounded-lg shadow-md">
         <div className="flex items-center space-x-2 mb-2">
-          <img src="/risco_alto.png" alt="Alto risco" className="w-6 h-6" />
+          <Image src="/risco_alto.png" alt="Alto risco" width={100} height={100} className="w-6 h-6" />
           <span>Perigo Potencial</span>
         </div>
         <div className="flex items-center space-x-2 mb-2">
-          <img src="/risco_medio.png" alt="Médio risco" className="w-6 h-6" />
+          <Image src="/risco_medio.png" alt="Médio risco" width={100} height={100} className="w-6 h-6" />
           <span>Atenção</span>
         </div>
         <div className="flex items-center space-x-2">
-          <img src="/risco_baixo.png" alt="Baixo risco" className="w-6 h-6" />
+          <Image src="/risco_baixo.png" alt="Baixo risco" width={100} height={100} className="w-6 h-6" />
           <span>Observação</span>
         </div>
       </div>
