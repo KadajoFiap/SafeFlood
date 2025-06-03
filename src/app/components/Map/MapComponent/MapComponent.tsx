@@ -321,9 +321,9 @@ export default function MapComponent() {
             </div>
           </div>
         ) : (
-          pontos.map((ponto) => (
+          pontos.map((ponto, idx) => (
             <Marker
-              key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}`}
+              key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}-${idx}`}
               position={[ponto.latitude, ponto.longitude]}
               icon={getIconForRiskLevel(ponto.nivel)}
             >
