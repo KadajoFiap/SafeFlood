@@ -90,10 +90,8 @@ const center: LatLngExpression = [-15.788, -47.929];
 // Função para extrair UF do campo municipios
 const extrairUF = (municipios: string | undefined): string => {
   if (!municipios) return 'BR';
-  // Padrão: "Município - UF"
-  const regex = / - ([A-Z]{2})/;
-  const match = municipios.match(regex);
-  return match ? match[1] : 'BR';
+  const matches = municipios.match(/ - ([A-Z]{2})/g);
+  return matches?.[0]?.replace(' - ', '') || 'BR';
 };
 
 // Função para extrair o primeiro município
@@ -127,6 +125,29 @@ const calcularCentroide = (poligono: string | undefined): [number, number] | nul
   return null;
 };
 
+const parseRSSItem = (item: Element): AlertaINMET => {
+  const description = item.querySelector('description')?.textContent || '';
+  const tableMatch = description.match(/<table[^>]*>([\s\S]*?)<\/table>/);
+  const tableContent = tableMatch ? tableMatch[1] : '';
+  
+  // Extract data from table rows
+  const getTableValue = (label: string): string => {
+    const regex = new RegExp(`<tr>\\s*<th[^>]*>${label}<\/th>\\s*<td>([^<]*)<\/td>\\s*<\/tr>`);
+    const match = tableContent.match(regex);
+    return match ? match[1].trim() : '';
+  };
+
+  return {
+    id: parseInt(item.querySelector('guid')?.textContent?.split('/').pop() || '0'),
+    data_inicio: getTableValue('Início'),
+    data_fim: getTableValue('Fim'),
+    municipios: getTableValue('Área'),
+    poligono: '', // RSS feed doesn't provide polygon data
+    severidade: getTableValue('Severidade'),
+    descricao: getTableValue('Descrição')
+  };
+};
+
 export default function MapComponent() {
   const [mounted, setMounted] = useState(false);
   const [pontos, setPontos] = useState<PontoDeRisco[]>([]);
@@ -155,19 +176,29 @@ export default function MapComponent() {
         }
         
         const data = await res.json();
-        console.log('Dados da API:', data);
+        console.log('Dados recebidos:', data);
         
-        // Verificar estrutura real dos dados
-        if (!data || (!data.hoje && !Array.isArray(data))) {
-          console.warn('Formato de dados inválido:', data);
-          setPontos([]);
-          return;
-        }
-        
-        const alertas: AlertaINMET[] = data.hoje || [];
+        const alertas: AlertaINMET[] = [
+          ...(data[0]?.hoje || []),
+          ...(data[0]?.futuro || [])
+        ];
+        console.log('Alertas recebidos:', alertas);
         console.log('Alertas encontrados:', alertas.length);
         
         const transformados: PontoDeRisco[] = [];
+        
+        // Add test point
+        transformados.push({
+          id: 999999,
+          latitude: -23.5505,
+          longitude: -46.6333,
+          nivel: 'Alto',
+          descricao: 'Teste manual SP',
+          inicio: '2025-06-03 10:00',
+          fim: '2025-06-04 10:00',
+          uf: 'SP',
+          municipio: 'São Paulo'
+        });
         
         for (const alerta of alertas) {
           const uf = extrairUF(alerta.municipios);
