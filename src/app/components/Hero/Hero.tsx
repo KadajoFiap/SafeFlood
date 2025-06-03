@@ -11,7 +11,7 @@ export default function Hero() {
                     backgroundPosition: "center",
                 }}
             >
-                <div className="pl-60 w-1/3 text-white text-5xl font-bold">
+                <div className="pl-60 w-2/5 text-white text-5xl font-bold">
                     <h1>
                         Enchentes não podem mais te pegar de surpresa
                     </h1>

@@ -20,8 +20,9 @@ export default function Item({
             <Image 
                 src={imageSrc} 
                 alt={title} 
-                width={300} 
-                height={200} 
+                width={600} 
+                height={400} 
+                quality={100}
                 className="w-full h-40 object-cover rounded-md mb-4" 
             />
             <h2 className="text-xl font-semibold text-[#132536] mb-2">{title}</h2>
