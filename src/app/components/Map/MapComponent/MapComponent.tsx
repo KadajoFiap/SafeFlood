@@ -125,29 +125,6 @@ const calcularCentroide = (poligono: string | undefined): [number, number] | nul
   return null;
 };
 
-const parseRSSItem = (item: Element): AlertaINMET => {
-  const description = item.querySelector('description')?.textContent || '';
-  const tableMatch = description.match(/<table[^>]*>([\s\S]*?)<\/table>/);
-  const tableContent = tableMatch ? tableMatch[1] : '';
-  
-  // Extract data from table rows
-  const getTableValue = (label: string): string => {
-    const regex = new RegExp(`<tr>\\s*<th[^>]*>${label}<\/th>\\s*<td>([^<]*)<\/td>\\s*<\/tr>`);
-    const match = tableContent.match(regex);
-    return match ? match[1].trim() : '';
-  };
-
-  return {
-    id: parseInt(item.querySelector('guid')?.textContent?.split('/').pop() || '0'),
-    data_inicio: getTableValue('Início'),
-    data_fim: getTableValue('Fim'),
-    municipios: getTableValue('Área'),
-    poligono: '', // RSS feed doesn't provide polygon data
-    severidade: getTableValue('Severidade'),
-    descricao: getTableValue('Descrição')
-  };
-};
-
 export default function MapComponent() {
   const [mounted, setMounted] = useState(false);
   const [pontos, setPontos] = useState<PontoDeRisco[]>([]);
