@@ -13,10 +13,19 @@ const DefaultIcon = L.Icon.Default as unknown as {
 };
 
 delete DefaultIcon.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: '/marker-icon.png',
-  shadowUrl: '/marker-shadow.png',
-});
+
+const getIconForRiskLevel = (nivel: 'Alto' | 'Médio' | 'Baixo') => {
+  const iconUrl = nivel === 'Alto' ? '/risco_alto.png' : 
+                 nivel === 'Médio' ? '/risco_medio.png' : 
+                 '/risco_baixo.png';
+  
+  return new L.Icon({
+    iconUrl,
+    iconSize: [75, 75],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+  });
+};
 
 interface PontoDeRisco {
   id: number;
@@ -55,6 +64,7 @@ export default function MapComponent() {
         <Marker
           key={ponto.id}
           position={[ponto.latitude, ponto.longitude]}
+          icon={getIconForRiskLevel(ponto.nivel)}
         >
           <Popup>Risco: {ponto.nivel}</Popup>
         </Marker>
