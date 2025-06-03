@@ -17,7 +17,7 @@ export default function Features() {
                             linkHref="#"
                         />
                         <Item
-                            imageSrc="/placeholder-development.png"
+                            imageSrc="/mapa.jpg"
                             title="Alerta Geolocalizado em Tempo Real"
                             description="Envie e visualize alertas automáticos baseados na localização dos sensores IoT espalhados pela cidade. A população é notificada imediatamente via app ou SMS, com rotas de fuga e recomendações de segurança."
                             linkText="Saiba como os alertas funcionam"
