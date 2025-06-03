@@ -4,6 +4,12 @@ import { NextResponse } from 'next/server';
 // Cache simples em memória
 const geoCache: Record<string, [number, number]> = {};
 
+interface AlertaINMET {
+  municipio?: string;
+  uf?: string;
+  // outros campos se necessário
+}
+
 export async function GET() {
   try {
     const response = await fetch('https://apiprevmet3.inmet.gov.br/avisos/ativos');
@@ -62,7 +68,7 @@ export async function GET() {
 
     // Processar alertas com geocoding
     const processedData = await Promise.all(
-      dataArray.map(async (alerta: any) => {
+      dataArray.map(async (alerta: AlertaINMET) => {
         let latitude = null;
         let longitude = null;
         

@@ -29,13 +29,15 @@ const getIconForRiskLevel = (nivel: 'Alto' | 'Médio' | 'Baixo') => {
   });
 };
 
-// Interface para os dados da API
-interface AlertaAPI {
+// Definir interface para os alertas do INMET
+interface AlertaINMET {
   id: number;
   data_inicio: string;
   data_fim: string;
   municipios: string;
   poligono: string;
+  severidade: string;
+  descricao: string;
 }
 
 // Interface para os pontos no mapa
@@ -162,7 +164,7 @@ export default function MapComponent() {
           return;
         }
         
-        const alertas: any[] = data.hoje || [];
+        const alertas: AlertaINMET[] = data.hoje || [];
         console.log('Alertas encontrados:', alertas.length);
         
         const transformados: PontoDeRisco[] = [];
