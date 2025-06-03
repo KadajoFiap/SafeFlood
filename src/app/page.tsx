@@ -1,6 +1,6 @@
 import Hero from "./components/Hero/Hero";
-import Features from "./Features/Features";
-import MapHomepage from "./MapHomepage/MapHomepage";
+import Features from "./components/Features/Features";
+import MapHomepage from "./components/MapHomepage/MapHomepage";
 
 export default function Home() {
   return (
