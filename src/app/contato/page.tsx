@@ -39,7 +39,7 @@ export default function Contato() {
     };
 
     return (
-        <div className="flex  justify-center min-h-screen bg-[#132533] py-12">
+        <div className="flex  justify-center min-h-screen bg-[#132536] py-12">
             <div className="w-full max-w-3xl px-4">
                 <div className="flex flex-col justify-center mb-8">
                     <h1 className="text-white text-4xl font-bold">Entre em contato</h1>
