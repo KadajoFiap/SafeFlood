@@ -96,7 +96,7 @@ export default function DashboardContent({ pontos }: { pontos: PontoDeRisco[] })
                 Nenhum alerta encontrado com os filtros selecionados
               </div>
             ) : (
-              pontosFiltrados.map((ponto, idx) => (
+              pontosFiltrados.map((ponto: PontoDeRisco, idx: number) => (
                 <div key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}-${idx}`} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <div className="flex items-start gap-2">
                     <Image
