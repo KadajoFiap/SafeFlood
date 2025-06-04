@@ -20,4 +20,32 @@ export interface PontoDeRisco {
   municipio: string;
 }
 
-export type RiskLevel = 'Alto' | 'Médio' | 'Baixo'; 
+export type RiskLevel = 'Alto' | 'Médio' | 'Baixo';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData extends LoginData {
+  name: string;
+  confirmPassword: string;
+}
+
+export interface EmailConfirmationData {
+  email: string;
+  code: string;
+} 
