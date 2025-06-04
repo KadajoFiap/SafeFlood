@@ -278,64 +278,67 @@ export default function MapComponent() {
 
   return (
     <div className="relative w-full h-full">
-      <MapContainer 
-        center={mapCenter} 
-        zoom={7} 
-        style={{ height: '100%', width: '100%' }}
-        minZoom={4}
-        maxBounds={[[-35, -75], [5, -30]]}
-        attributionControl={false}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        
-        {pontos.length === 0 ? (
-          <div className="leaflet-top leaflet-left">
-            <div className="leaflet-control leaflet-bar bg-white p-4 rounded shadow">
-              <p className="text-gray-700">Nenhum alerta encontrado no momento</p>
+      {mounted && (
+        <MapContainer 
+          center={mapCenter} 
+          zoom={7} 
+          style={{ height: '100%', width: '100%' }}
+          minZoom={4}
+          maxBounds={[[-35, -75], [5, -30]]}
+          attributionControl={false}
+          key="map-container"
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          
+          {pontos.length === 0 ? (
+            <div className="leaflet-top leaflet-left">
+              <div className="leaflet-control leaflet-bar bg-white p-4 rounded shadow">
+                <p className="text-gray-700">Nenhum alerta encontrado no momento</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          pontos.map((ponto, idx) => (
-            <Marker
-              key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}-${idx}`}
-              position={[ponto.latitude, ponto.longitude]}
-              icon={getIconForRiskLevel(ponto.nivel)}
-            >
-              <Popup>
-                <div className="min-w-[250px]">
-                  <h3 className="font-bold text-lg text-gray-800">
-                    {ponto.municipio} - {ponto.uf}
-                  </h3>
-                  <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${
-                    ponto.nivel === 'Alto' ? 'bg-red-100 text-red-800' : 
-                    ponto.nivel === 'Médio' ? 'bg-orange-100 text-orange-800' : 
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    Risco: {ponto.nivel}
-                  </div>
-                  <p className="mt-2 text-gray-700">{ponto.descricao}</p>
-                  
-                  <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
-                    <span className="font-medium">Início:</span>
-                    <span>{new Date(ponto.inicio).toLocaleString('pt-BR')}</span>
+          ) :
+            pontos.map((ponto, idx) => (
+              <Marker
+                key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}-${idx}`}
+                position={[ponto.latitude, ponto.longitude]}
+                icon={getIconForRiskLevel(ponto.nivel)}
+              >
+                <Popup>
+                  <div className="min-w-[250px]">
+                    <h3 className="font-bold text-lg text-gray-800">
+                      {ponto.municipio} - {ponto.uf}
+                    </h3>
+                    <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${
+                      ponto.nivel === 'Alto' ? 'bg-red-100 text-red-800' : 
+                      ponto.nivel === 'Médio' ? 'bg-orange-100 text-orange-800' : 
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      Risco: {ponto.nivel}
+                    </div>
+                    <p className="mt-2 text-gray-700">{ponto.descricao}</p>
                     
-                    <span className="font-medium">Fim:</span>
-                    <span>{new Date(ponto.fim).toLocaleString('pt-BR')}</span>
-                    
-                    <span className="font-medium">Coordenadas:</span>
-                    <span>{ponto.latitude.toFixed(4)}, {ponto.longitude.toFixed(4)}</span>
+                    <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
+                      <span className="font-medium">Início:</span>
+                      <span>{new Date(ponto.inicio).toLocaleString('pt-BR')}</span>
+                      
+                      <span className="font-medium">Fim:</span>
+                      <span>{new Date(ponto.fim).toLocaleString('pt-BR')}</span>
+                      
+                      <span className="font-medium">Coordenadas:</span>
+                      <span>{ponto.latitude.toFixed(4)}, {ponto.longitude.toFixed(4)}</span>
+                    </div>
                   </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))
-        )}
-      </MapContainer>
+                </Popup>
+              </Marker>
+            ))
+          }
+        </MapContainer>
+      )}
       
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white p-3 rounded-lg shadow-md">
+      <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000]">
         <div className="flex items-center space-x-2 mb-2">
           <Image src="/risco_alto.png" alt="Alto risco" width={100} height={100} className="w-6 h-6" />
           <span>Perigo Potencial</span>
