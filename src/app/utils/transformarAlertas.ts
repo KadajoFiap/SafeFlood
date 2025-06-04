@@ -56,7 +56,7 @@ function calcularCentroide(poligono: string | undefined): [number, number] | nul
       const primeiroPonto = primeiroAnel[0];
       return [primeiroPonto[1], primeiroPonto[0]];
     }
-  } catch (e) {}
+  } catch {}
   return null;
 }
 
@@ -67,7 +67,7 @@ function getNivelRisco(severidade: string): 'Alto' | 'Médio' | 'Baixo' {
   return 'Baixo';
 }
 
-export function transformarAlertas(data: any): PontoDeRisco[] {
+export function transformarAlertas(data: unknown): PontoDeRisco[] {
   // Suporta tanto data[0]?.hoje/futuro quanto array direto
   let alertas: AlertaINMET[] = [];
   if (Array.isArray(data)) {
@@ -79,8 +79,8 @@ export function transformarAlertas(data: any): PontoDeRisco[] {
     } else {
       alertas = data;
     }
-  } else {
-    alertas = [data];
+  } else if (typeof data === 'object' && data !== null) {
+    alertas = [data as AlertaINMET];
   }
 
   const transformados: PontoDeRisco[] = [];
