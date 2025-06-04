@@ -63,7 +63,7 @@ export default function DashboardContent({ pontos }: { pontos: PontoDeRisco[] })
             <label className="block text-xs font-medium text-gray-700 mb-1">Nível de Risco</label>
             <select
               value={filtroNivel}
-              onChange={(e) => setFiltroNivel(e.target.value as any)}
+              onChange={(e) => setFiltroNivel(e.target.value as 'Todos' | 'Alto' | 'Médio' | 'Baixo')}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
             >
               <option value="Todos">Todos</option>
@@ -76,7 +76,7 @@ export default function DashboardContent({ pontos }: { pontos: PontoDeRisco[] })
             <label className="block text-xs font-medium text-gray-700 mb-1">Período</label>
             <select
               value={filtroPeriodo}
-              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
+              onChange={(e) => setFiltroPeriodo(e.target.value as 'Todos' | 'Ativos' | 'Passados')}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
             >
               <option value="Todos">Todos</option>
