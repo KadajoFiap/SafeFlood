@@ -4,7 +4,7 @@ import Perfil from "./Perfil/Perfil";
 
 export default function Header() {
   return (
-    <div className="bg-[#132536] flex justify-between items-center px-16 py-5 fixed w-full z-[1001]">
+    <div className="bg-[#132536] flex justify-between items-center px-16 py-5 sticky top-0 w-full z-[1001]">
         <div>
             <Logo />
         </div>
