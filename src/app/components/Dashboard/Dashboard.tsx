@@ -45,9 +45,13 @@ export default function Dashboard() {
 
     return (
         <div className="flex items-start justify-center w-full h-full p-4">
-            <div className="flex gap-4 w-full max-w-[1200px]">
+            <div className="flex flex-col md:flex-row gap-4 w-full max-w-[1200px]">
+                {/* Dashboard Sidebar */}
+                <div className="w-full md:w-[350px] order-1 md:order-2 overflow-y-auto" style={{ height: 'calc(100vh - 15rem)' }}>
+                    <DashboardContent pontos={pontos} />
+                </div>
                 {/* Mapa */}
-                <div className="flex-1">
+                <div className="flex-1 order-2 md:order-1">
                     <div
                         className="relative z-10 rounded-lg shadow-lg border-2 border-[#F5FAFF] overflow-hidden"
                         style={{ height: 'calc(100vh - 15rem)', background: '#fff' }}
@@ -56,11 +60,6 @@ export default function Dashboard() {
                             {mounted && <Map />}
                         </div>
                     </div>
-                </div>
-
-                {/* Dashboard Sidebar */}
-                <div className="w-[350px] overflow-y-auto" style={{ height: 'calc(100vh - 15rem)' }}>
-                    <DashboardContent pontos={pontos} />
                 </div>
             </div>
         </div>
