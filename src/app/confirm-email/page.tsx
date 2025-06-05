@@ -32,7 +32,7 @@ export default function ConfirmEmailPage() {
       name: 'code',
       label: 'Código de Confirmação',
       type: 'text',
-      placeholder: 'Digite o código recebido por email',
+      placeholder: 'Digite o código',
       required: true
     }
   ];
@@ -51,7 +51,7 @@ export default function ConfirmEmailPage() {
         >
           ← Voltar
         </button>
-        <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+        <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center mx-4 md:mx-0">
           <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
             Confirme seu email
           </h2>
@@ -62,7 +62,8 @@ export default function ConfirmEmailPage() {
             fields={fields}
             onSubmit={handleSubmit}
             submitLabel="Confirmar"
-            className="space-y-6 w-full"
+            className="w-full"
+            compact={true}
           >
           </Formulario>
         </div>

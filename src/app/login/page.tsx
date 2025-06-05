@@ -58,7 +58,7 @@ export default function LoginPage() {
                 >
                     ← Voltar
                 </button>
-                <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+                <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl mx-4 md:mx-0 p-8 flex flex-col items-center">
                     <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
                         Entre na sua conta
                     </h2>
@@ -69,12 +69,13 @@ export default function LoginPage() {
                         fields={fields}
                         onSubmit={handleSubmit}
                         submitLabel={isLoading ? 'Entrando...' : 'Entrar'}
-                        className="space-y-6 w-full"
+                        className="w-full"
+                        compact={true}
                     >
                         {error && (
                             <div className="text-red-600 text-center text-sm font-semibold mb-2">{error}</div>
                         )}
-                        <div className="flex flex-col items-center space-y-2">
+                        <div className="flex flex-col items-center space-y-2 pt-6">
                             <Link
                                 href="/register"
                                 className="text-sm text-indigo-500 hover:text-indigo-700"

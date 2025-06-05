@@ -12,6 +12,7 @@ export interface FormField {
     pattern?: RegExp;
     message?: string;
   };
+  className?: string;
 }
 
 interface FormularioProps {
@@ -21,6 +22,7 @@ interface FormularioProps {
   className?: string;
   initialValues?: Record<string, string>;
   children?: ReactNode;
+  compact?: boolean;
 }
 
 export default function Formulario({
@@ -29,7 +31,8 @@ export default function Formulario({
   submitLabel = 'Enviar',
   className = '',
   initialValues = {},
-  children
+  children,
+  compact = false
 }: FormularioProps) {
   const [formData, setFormData] = useState<Record<string, string>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -82,9 +85,13 @@ export default function Formulario({
         handleChange(field.name, e.target.value, field),
       placeholder: field.placeholder,
       required: field.required,
-      className: `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-        errors[field.name] ? 'border-red-500' : 'border-gray-300'
-      }`
+      className: [
+        'w-full px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-blue-500',
+        errors[field.name] ? 'border-red-500' : 'border-gray-300',
+        compact ? (field.name === fields[0].name ? 'rounded-t-md' : field.name === fields[fields.length - 1].name ? 'rounded-b-md' : 'rounded-none') : 'rounded-md',
+        compact && field.name !== fields[fields.length - 1].name ? '-mb-px' : '',
+        field.className || ''
+      ].join(' ')
     };
 
     switch (field.type) {
@@ -119,26 +126,28 @@ export default function Formulario({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
-      {fields.map(field => (
-        <div key={field.name} className="space-y-2">
-          <label
-            htmlFor={field.name}
-            className="block text-sm font-medium text-gray-700"
-          >
-            {field.label}
-            {field.required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          {renderField(field)}
+    <form onSubmit={handleSubmit} className={`${compact ? '' : 'space-y-6'} ${className}`}>
+      {fields.map((field, idx) => (
+        <div key={field.name} className={compact ? '' : 'space-y-2'}>
+          {renderField({
+            ...field,
+            className: [
+              'w-full px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-blue-500',
+              errors[field.name] ? 'border-red-500' : 'border-gray-300',
+              compact ? (idx === 0 ? 'rounded-t-md' : idx === fields.length - 1 ? 'rounded-b-md' : 'rounded-none') : 'rounded-md',
+              compact && idx !== fields.length - 1 ? '-mb-px' : '',
+              field.className || ''
+            ].join(' ')
+          })}
           {errors[field.name] && (
-            <p className="text-sm text-red-500">{errors[field.name]}</p>
+            <p className="text-sm text-red-500 mt-1">{errors[field.name]}</p>
           )}
         </div>
       ))}
 
       {children}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-4">
         <button
           type="submit"
           className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

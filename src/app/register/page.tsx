@@ -84,7 +84,7 @@ export default function Register() {
         >
           ← Voltar
         </button>
-        <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+        <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center mx-4 md:mx-0">
           <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
             Criar uma conta
           </h2>
@@ -92,9 +92,10 @@ export default function Register() {
             fields={fields}
             onSubmit={handleSubmit}
             submitLabel="Registrar"
-            className="space-y-6 w-full"
+            className="w-full"
+            compact={true}
           >
-            <div className="w-full bg-blue-50 rounded-lg p-4 mb-2 flex items-start gap-2">
+            <div className="w-full bg-blue-50 rounded-lg p-4 mb-2 flex items-start gap-2 mt-6">
               <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5" />
               <ul className="list-disc list-inside mt-1 text-sm text-blue-700">
                 <li>Mínimo de 8 caracteres</li>
