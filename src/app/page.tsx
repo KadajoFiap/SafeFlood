@@ -4,7 +4,7 @@ import MapHomepage from "./components/MapHomepage/MapHomepage";
 
 export default function Home() {
   return (
-    <div className="bg-[#132536] w-full">
+    <div className="bg-[#132536] w-full overflow-x-hidden">
       <Hero />
       <MapHomepage />
       <Features />

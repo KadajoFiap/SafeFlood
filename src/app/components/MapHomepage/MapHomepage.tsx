@@ -10,7 +10,7 @@ const Map = dynamic(() => import('../Map/Map'), {
 
 export default function MapHomepage() {
     return (
-        <div className="w-full min-h-screen bg-[#132536] pt-24 pb-8 flex flex-col items-center">
+        <div className="w-full min-h-screen bg-[#132536] pt-24 pb-8 flex flex-col items-center px-8 md:px-4">
             <h1 className="text-4xl font-bold text-[#F5FAFF] mb-20 text-center">
                 Mapa de Riscos de Enchentes
             </h1>

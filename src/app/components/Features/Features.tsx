@@ -32,7 +32,7 @@ export default function Features() {
                     <div className="pb-10 text-center">
                         <h1 className="text-[#F5FAFF] text-4xl">Funcionalidades</h1>
                     </div>
-                    <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 py-10 px-4">
+                    <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 py-10 px-8 md:px-4">
                         {listas.map((lista, index) => (
                             <Item
                                 key={index}

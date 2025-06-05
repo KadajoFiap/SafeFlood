@@ -13,17 +13,17 @@ export default function Hero() {
                 style={{
                     backgroundImage: "url('/homem_na_chuva.png')",
                     backgroundSize: "cover",
-                    backgroundPosition: "center",
+                    backgroundPosition: "60% center",
                 }}
             >
-                <div className="pl-60 w-2/5 text-white text-5xl font-bold">
+                <div className="px-8 md:px-4 md:pl-60 md:pr-16 w-full md:w-2/5 text-white text-3xl md:text-5xl font-bold">
                     <h1>
                         Enchentes não podem mais te pegar de surpresa
                     </h1>
-                    <span className="text-white text-3xl font-medium">
+                    <span className="text-white text-base md:text-3xl font-medium">
                         SafeFlood antecipa riscos, protege vidas e conecta sua cidade em tempo real.
                     </span>
-                    <div className="flex gap-4 pt-4">
+                    <div className="flex flex-col md:flex-row gap-4 pt-4">
                         <Button className="w-full bg-white"
                             onClick={() => {
                                 router.push('/riscos');
