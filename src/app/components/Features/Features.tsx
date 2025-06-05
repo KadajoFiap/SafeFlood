@@ -20,8 +20,8 @@ export default function Features() {
             imageSrc: '/dashboard.png',
             title: 'Dashboard Interativo para Gestão de Ocorrências',
             description: 'Acompanhe, em tempo real, todas as ocorrências reportadas. Consulte áreas mais críticas, tempo médio de resposta e regiões com maior volume de relatos. A ferramenta ideal para tomada de decisão rápida.',   
-            linkText: 'Acesse o painel de gestão',
-            linkHref: '#'
+            linkText: 'Acesse o dashboard de gestão',
+            linkHref: '/riscos'
         }
     ]
 

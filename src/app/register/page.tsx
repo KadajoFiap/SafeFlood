@@ -1,104 +1,119 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import { useAuth } from '../context/AuthContext';
 import Formulario, { FormField } from '../components/Formulario/Formulario';
-import type { RegisterData } from '../utils/types';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
-const RegisterPage = () => {
-    const router = useRouter();
-    const [error, setError] = useState<string | null>(null);
+export default function Register() {
+  const router = useRouter();
+  const { register } = useAuth();
 
-    const fields: FormField[] = [
-        {
-            name: 'name',
-            label: 'Nome Completo',
-            type: 'text',
-            required: true,
-            placeholder: 'Digite seu nome completo',
-            validation: {
-                pattern: /^[a-zA-ZÀ-ÿ\s]{3,}$/,
-                message: 'Nome deve conter apenas letras e ter no mínimo 3 caracteres'
-            }
-        },
-        {
-            name: 'email',
-            label: 'E-mail',
-            type: 'email',
-            required: true,
-            placeholder: 'Digite seu e-mail',
-            validation: {
-                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: 'Digite um e-mail válido'
-            }
-        },
-        {
-            name: 'password',
-            label: 'Senha',
-            type: 'password',
-            required: true,
-            placeholder: 'Digite sua senha',
-            validation: {
-                pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
-                message: 'Senha deve ter no mínimo 8 caracteres, uma letra e um número'
-            }
-        },
-        {
-            name: 'confirmPassword',
-            label: 'Confirmar Senha',
-            type: 'password',
-            required: true,
-            placeholder: 'Confirme sua senha'
-        }
-    ];
+  const passwordRequirements = {
+    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/,
+    message: 'A senha deve ter pelo menos 8 caracteres, uma maiúscula, uma minúscula, um número e um caractere especial.'
+  };
 
-    const handleSubmit = async (data: Record<string, string>) => {
-        // Temporarily disabled - API integration pending
-        setError('Funcionalidade em desenvolvimento. Aguarde a integração com a API.');
-    };
+  const fields: FormField[] = [
+    {
+      name: 'username',
+      label: 'Usuário',
+      type: 'text',
+      placeholder: 'Digite seu usuário',
+      required: true
+    },
+    {
+      name: 'email',
+      label: 'Email',
+      type: 'email',
+      placeholder: 'Digite seu email',
+      required: true,
+      validation: {
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        message: 'Digite um email válido'
+      }
+    },
+    {
+      name: 'password',
+      label: 'Senha',
+      type: 'password',
+      placeholder: 'Digite sua senha',
+      required: true,
+      validation: passwordRequirements
+    },
+    {
+      name: 'confirmPassword',
+      label: 'Confirmar Senha',
+      type: 'password',
+      placeholder: 'Confirme sua senha',
+      required: true,
+    },
+  ];
 
-    return (
-        <div className="flex justify-center items-center min-h-screen bg-[#132536] py-12">
-            <div className="w-full max-w-md px-4">
-                <div className="bg-white rounded-lg shadow-xl p-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900">Criar Conta</h1>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Preencha os dados abaixo para criar sua conta
-                        </p>
-                        <div className="mt-4 p-4 bg-yellow-50 text-yellow-700 rounded-md">
-                            <p className="text-sm font-medium">Funcionalidade em desenvolvimento</p>
-                            <p className="text-xs mt-1">A integração com a API está em andamento.</p>
-                        </div>
-                    </div>
+  const handleSubmit = async (data: Record<string, string>) => {
+    if (data.password !== data.confirmPassword) {
+      alert('As senhas não coincidem.');
+      return;
+    }
+    try {
+      console.log('[Registro] Iniciando registro com dados:', { username: data.username, email: data.email });
+      await register(data.username, data.email, data.password);
+      console.log('[Registro] Registro bem-sucedido, redirecionando para confirmação de email.');
+      router.push('/');
+    } catch (err) {
+      console.error('[Registro] Erro ao registrar:', err);
+      const errorMsg = (typeof err === 'object' && err && 'message' in err && typeof (err as any).message === 'string')
+        ? (err as any).message
+        : String(err);
+      alert('Erro ao registrar: ' + errorMsg);
+    }
+  };
 
-                    {error && (
-                        <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-md">
-                            {error}
-                        </div>
-                    )}
-
-                    <Formulario
-                        fields={fields}
-                        onSubmit={handleSubmit}
-                        submitLabel="Criar Conta"
-                        className="space-y-6"
-                    />
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600">
-                            Já tem uma conta?{' '}
-                            <Link href="/login" className="text-blue-600 hover:text-blue-500">
-                                Faça login
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default dynamic(() => Promise.resolve(RegisterPage), { ssr: false }); 
+  return (
+    <div
+      className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
+      style={{
+        backgroundImage: 'url(\'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80\')',
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => router.push('/')}
+        className="cursor-pointer absolute top-6 left-6 text-amber-300 font-semibold bg-transparent rounded px-4 py-1 hover:bg-white hover:text-[#132536] transition-colors z-10"
+      >
+        ← Voltar
+      </button>
+      <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+        <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
+          Criar uma conta
+        </h2>
+        <Formulario
+          fields={fields}
+          onSubmit={handleSubmit}
+          submitLabel="Registrar"
+          className="space-y-6 w-full"
+        >
+          <div className="w-full bg-blue-50 rounded-lg p-4 mb-2 flex items-start gap-2">
+            <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5" />
+            <ul className="list-disc list-inside mt-1 text-sm text-blue-700">
+              <li>Mínimo de 8 caracteres</li>
+              <li>Pelo menos uma letra maiúscula</li>
+              <li>Pelo menos uma letra minúscula</li>
+              <li>Pelo menos um número</li>
+              <li>Pelo menos um caractere especial <span className="font-mono">(@$!%*?&)</span></li>
+            </ul>
+          </div>
+          <div className="text-center">
+            <Link
+              href="/login"
+              className="text-sm text-indigo-500 hover:text-indigo-700"
+            >
+              Já tem uma conta? Faça login
+            </Link>
+          </div>
+        </Formulario>
+      </div>
+    </div>
+  );
+} 

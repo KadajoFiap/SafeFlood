@@ -1,87 +1,88 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import { useAuth } from '../context/AuthContext';
 import Formulario, { FormField } from '../components/Formulario/Formulario';
-import type { LoginData } from '../utils/types';
+import { useState } from 'react';
 
-const LoginPage = () => {
+export default function LoginPage() {
     const router = useRouter();
-    const [error, setError] = useState<string | null>(null);
+    const { login } = useAuth();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (data: Record<string, string>) => {
+        setIsLoading(true);
+        setError('');
+        try {
+            await login(data.username, data.password);
+            router.push('/');
+        } catch (err) {
+            setError('Usuário ou senha inválidos.');
+            console.error('Erro no login:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const fields: FormField[] = [
         {
-            name: 'email',
-            label: 'E-mail',
-            type: 'email',
-            required: true,
-            placeholder: 'Digite seu e-mail',
-            validation: {
-                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: 'Digite um e-mail válido'
-            }
+            name: 'username',
+            label: 'Usuário',
+            type: 'text',
+            placeholder: 'Digite seu usuário',
+            required: true
         },
         {
             name: 'password',
             label: 'Senha',
             type: 'password',
-            required: true,
-            placeholder: 'Digite sua senha'
+            placeholder: 'Digite sua senha',
+            required: true
         }
     ];
 
-    const handleSubmit = async (data: Record<string, string>) => {
-        // Temporarily disabled - API integration pending
-        setError('Funcionalidade em desenvolvimento. Aguarde a integração com a API.');
-    };
-
     return (
-        <div className="flex justify-center items-center min-h-screen bg-[#132536] py-12">
-            <div className="w-full max-w-md px-4">
-                <div className="bg-white rounded-lg shadow-xl p-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900">Login</h1>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Entre com suas credenciais para acessar o sistema
-                        </p>
-                        <div className="mt-4 p-4 bg-yellow-50 text-yellow-700 rounded-md">
-                            <p className="text-sm font-medium">Funcionalidade em desenvolvimento</p>
-                            <p className="text-xs mt-1">A integração com a API está em andamento.</p>
-                        </div>
-                    </div>
-
+        <div
+            className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
+            style={{
+                backgroundImage: "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80')",
+            }}
+        >
+            <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="cursor-pointer absolute top-6 left-6 text-amber-300 font-semibold bg-transparent rounded px-4 py-1 hover:bg-white hover:text-[#132536] transition-colors z-10"
+            >
+                ← Voltar
+            </button>
+            <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+                <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
+                    Entre na sua conta
+                </h2>
+                <p className="mt-2 text-center text-sm text-gray-800 mb-4">
+                    Faça login para acessar recursos adicionais
+                </p>
+                <Formulario
+                    fields={fields}
+                    onSubmit={handleSubmit}
+                    submitLabel={isLoading ? 'Entrando...' : 'Entrar'}
+                    className="space-y-6 w-full"
+                >
                     {error && (
-                        <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-md">
-                            {error}
-                        </div>
+                        <div className="text-red-600 text-center text-sm font-semibold mb-2">{error}</div>
                     )}
-
-                    <Formulario
-                        fields={fields}
-                        onSubmit={handleSubmit}
-                        submitLabel="Entrar"
-                        className="space-y-6"
-                    />
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600">
-                            Não tem uma conta?{' '}
-                            <Link href="/register" className="text-blue-600 hover:text-blue-500">
-                                Registre-se
-                            </Link>
-                        </p>
-                        <p className="mt-2 text-sm text-gray-600">
-                            <Link href="/confirm-email" className="text-blue-600 hover:text-blue-500">
-                                Confirmar e-mail
-                            </Link>
-                        </p>
+                    <div className="flex flex-col items-center space-y-2">
+                        <Link
+                            href="/register"
+                            className="text-sm text-indigo-500 hover:text-indigo-700"
+                        >
+                            Não tem uma conta? Registre-se
+                        </Link>
                     </div>
-                </div>
+                </Formulario>
             </div>
         </div>
     );
-};
-
-export default dynamic(() => Promise.resolve(LoginPage), { ssr: false }); 
+} 

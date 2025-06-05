@@ -1,106 +1,79 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import { useAuth } from '../context/AuthContext';
 import Formulario, { FormField } from '../components/Formulario/Formulario';
-import type { EmailConfirmationData } from '../utils/types';
 
-const ConfirmEmailPage = () => {
-    const router = useRouter();
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
+export default function ConfirmEmailPage() {
+  const router = useRouter();
+  const { confirm } = useAuth();
 
-    const fields: FormField[] = [
-        {
-            name: 'email',
-            label: 'E-mail',
-            type: 'email',
-            required: true,
-            placeholder: 'Digite seu e-mail',
-            validation: {
-                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: 'Digite um e-mail válido'
-            }
-        },
-        {
-            name: 'code',
-            label: 'Código de Confirmação',
-            type: 'text',
-            required: true,
-            placeholder: 'Digite o código recebido por e-mail',
-            validation: {
-                pattern: /^\d{6}$/,
-                message: 'Código deve conter 6 dígitos'
-            }
-        }
-    ];
+  const handleSubmit = async (data: Record<string, string>) => {
+    try {
+      await confirm(data.username, data.code);
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    } catch (err) {
+      console.error('Confirmation error:', err);
+    }
+  };
 
-    const handleSubmit = async (data: Record<string, string>) => {
-        // Temporarily disabled - API integration pending
-        setError('Funcionalidade em desenvolvimento. Aguarde a integração com a API.');
-    };
+  const fields: FormField[] = [
+    {
+      name: 'username',
+      label: 'Usuário',
+      type: 'text',
+      placeholder: 'Digite seu usuário',
+      required: true
+    },
+    {
+      name: 'code',
+      label: 'Código de Confirmação',
+      type: 'text',
+      placeholder: 'Digite o código recebido por email',
+      required: true
+    }
+  ];
 
-    const handleResendCode = () => {
-        // Temporarily disabled - API integration pending
-        setError('Funcionalidade em desenvolvimento. Aguarde a integração com a API.');
-    };
-
-    return (
-        <div className="flex justify-center items-center min-h-screen bg-[#132536] py-12">
-            <div className="w-full max-w-md px-4">
-                <div className="bg-white rounded-lg shadow-xl p-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold text-gray-900">Confirmar E-mail</h1>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Digite o código de confirmação enviado para seu e-mail
-                        </p>
-                        <div className="mt-4 p-4 bg-yellow-50 text-yellow-700 rounded-md">
-                            <p className="text-sm font-medium">Funcionalidade em desenvolvimento</p>
-                            <p className="text-xs mt-1">A integração com a API está em andamento.</p>
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-md">
-                            {error}
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
-                            E-mail confirmado com sucesso! Redirecionando...
-                        </div>
-                    )}
-
-                    <Formulario
-                        fields={fields}
-                        onSubmit={handleSubmit}
-                        submitLabel="Confirmar E-mail"
-                        className="space-y-6"
-                    />
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600">
-                            Não recebeu o código?{' '}
-                            <button
-                                onClick={handleResendCode}
-                                className="text-blue-600 hover:text-blue-500"
-                            >
-                                Reenviar código
-                            </button>
-                        </p>
-                        <p className="mt-2 text-sm text-gray-600">
-                            <Link href="/login" className="text-blue-600 hover:text-blue-500">
-                                Voltar para o login
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default dynamic(() => Promise.resolve(ConfirmEmailPage), { ssr: false }); 
+  return (
+    <div
+      className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
+      style={{
+        backgroundImage: "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80')",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => router.push('/')}
+        className="cursor-pointer absolute top-6 left-6 text-amber-300 font-semibold bg-transparent rounded px-4 py-1 hover:bg-white hover:text-[#132536] transition-colors z-10"
+      >
+        ← Voltar
+      </button>
+      <div className="w-full max-w-md bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8 flex flex-col items-center">
+        <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">
+          Confirme seu email
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-800 mb-4">
+          Digite o código de confirmação enviado para seu email
+        </p>
+        <Formulario
+          fields={fields}
+          onSubmit={handleSubmit}
+          submitLabel="Confirmar"
+          className="space-y-6 w-full"
+        >
+          <div className="text-center">
+            <Link
+              href="/login"
+              className="text-sm text-indigo-500 hover:text-indigo-700"
+            >
+              Voltar para o login
+            </Link>
+          </div>
+        </Formulario>
+      </div>
+    </div>
+  );
+} 

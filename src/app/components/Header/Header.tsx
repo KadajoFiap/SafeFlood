@@ -8,7 +8,7 @@ export default function Header() {
         <div>
             <Logo />
         </div>
-        <div className="flex gap-15">
+        <div className="flex gap-15 items-center">
             <Menu />
             <Perfil />
         </div>

@@ -1,9 +1,13 @@
 'use client'
 
+import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
+
 export default function Painel() {
     return (
-        <div>
-            <h1>Painel</h1>
-        </div>
+        <ProtectedRoute>
+            <div>
+                {/* Your protected content here */}
+            </div>
+        </ProtectedRoute>
     )
 }
