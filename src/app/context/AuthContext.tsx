@@ -3,9 +3,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 
+interface AuthUser {
+  username?: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any | null;
+  user: AuthUser | null;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   confirm: (username: string, code: string) => Promise<void>;
@@ -14,17 +20,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function parseJwt(token: string) {
+function parseJwt(token: string): Record<string, unknown> | null {
   try {
     return JSON.parse(atob(token.split('.')[1]));
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     // Check if user is authenticated on mount
@@ -34,8 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Decodifica o token para preencher user
       const payload = parseJwt(token);
       setUser(payload ? {
-        username: payload.username || payload.sub,
-        email: payload.email
+        username: typeof payload.username === 'string' ? payload.username : (typeof payload.sub === 'string' ? payload.sub : undefined),
+        email: typeof payload.email === 'string' ? payload.email : undefined
       } : null);
     }
   }, []);
@@ -49,8 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true);
         const payload = parseJwt(accessToken);
         setUser(payload ? {
-          username: payload.username || payload.sub,
-          email: payload.email
+          username: typeof payload.username === 'string' ? payload.username : (typeof payload.sub === 'string' ? payload.sub : undefined),
+          email: typeof payload.email === 'string' ? payload.email : undefined
         } : null);
       } else {
         throw new Error('Token de acesso não encontrado na resposta da API.');
