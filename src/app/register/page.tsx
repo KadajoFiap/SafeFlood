@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import Formulario, { FormField } from '../components/Formulario/Formulario';
 import { InformationCircleIcon } from '@heroicons/react/24/outline';
-import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
 
 export default function Register() {
   const router = useRouter();

@@ -1,10 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import Formulario, { FormField } from '../components/Formulario/Formulario';
-import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
+
 
 export default function ConfirmEmailPage() {
   const router = useRouter();
