@@ -39,7 +39,6 @@ export default function ConfirmEmailPage() {
   ];
 
   return (
-    <ProtectedRoute>
       <div
         className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
         style={{
@@ -49,7 +48,7 @@ export default function ConfirmEmailPage() {
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="cursor-pointer absolute top-6 left-6 text-amber-300 font-semibold bg-transparent rounded px-4 py-1 hover:bg-white hover:text-[#132536] transition-colors z-10"
+          className="cursor-pointer absolute top-6 left-6 text-white font-semibold bg-transparent rounded px-4 py-1 hover:bg-white hover:text-[#132536] transition-colors z-10"
         >
           ← Voltar
         </button>
@@ -66,17 +65,8 @@ export default function ConfirmEmailPage() {
             submitLabel="Confirmar"
             className="space-y-6 w-full"
           >
-            <div className="text-center">
-              <Link
-                href="/login"
-                className="text-sm text-indigo-500 hover:text-indigo-700"
-              >
-                Voltar para o login
-              </Link>
-            </div>
           </Formulario>
         </div>
       </div>
-    </ProtectedRoute>
   );
 } 
