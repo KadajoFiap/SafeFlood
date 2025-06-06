@@ -5,6 +5,24 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button/Button';
 import Formulario, { FormField } from '@/app/components/Formulario/Formulario';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+interface LocationMarkerProps {
+  position: [number, number] | null;
+  setPosition: (pos: [number, number]) => void;
+}
+
+function LocationMarker({ position, setPosition }: LocationMarkerProps) {
+  useMapEvents({
+    click(e) {
+      setPosition([e.latlng.lat, e.latlng.lng]);
+    },
+  });
+
+  return position ? <Marker position={position} /> : null;
+}
 
 export default function AddAlerta() {
   const { isAuthenticated } = useAuth();
@@ -12,6 +30,7 @@ export default function AddAlerta() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [position, setPosition] = useState<[number, number] | null>(null);
 
   const handleAddAlerta = () => {
     if (!isAuthenticated) {
@@ -22,12 +41,36 @@ export default function AddAlerta() {
   };
 
   const handleSubmit = async (data: Record<string, string>) => {
+    if (!position) {
+      setError('Por favor, selecione uma localização no mapa.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     try {
-      // TODO: Implement API call to add alert
-      console.log('Dados do alerta:', data);
+      const alertData = {
+        ...data,
+        latitude: position[0],
+        longitude: position[1],
+        uf: data.uf,
+        municipio: data.municipio
+      };
+      
+      const response = await fetch('/api/alertas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(alertData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar alerta');
+      }
+
       setIsModalOpen(false);
+      setPosition(null);
     } catch (err) {
       setError('Erro ao adicionar alerta. Tente novamente.');
       console.error('Erro ao adicionar alerta:', err);
@@ -52,13 +95,13 @@ export default function AddAlerta() {
       required: true
     },
     {
-      name: 'nivel',
+      name: 'nivel_risco',
       label: 'Nível de Risco',
       type: 'select',
       options: [
-        { value: 'baixo', label: 'Baixo' },
-        { value: 'medio', label: 'Médio' },
-        { value: 'alto', label: 'Alto' }
+        { value: 'Alto', label: 'Alto' },
+        { value: 'Médio', label: 'Médio' },
+        { value: 'Baixo', label: 'Baixo' }
       ],
       required: true
     },
@@ -72,6 +115,20 @@ export default function AddAlerta() {
       name: 'data_fim',
       label: 'Data de Fim',
       type: 'date',
+      required: true
+    },
+    {
+      name: 'uf',
+      label: 'UF',
+      type: 'text',
+      placeholder: 'Ex: SP',
+      required: true
+    },
+    {
+      name: 'municipio',
+      label: 'Município',
+      type: 'text',
+      placeholder: 'Digite o nome do município',
       required: true
     }
   ];
@@ -100,7 +157,7 @@ export default function AddAlerta() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Adicionar Novo Alerta</h2>
               <button
@@ -130,12 +187,30 @@ export default function AddAlerta() {
               </div>
             )}
 
-            <Formulario
-              fields={fields}
-              onSubmit={handleSubmit}
-              submitLabel={isSubmitting ? 'Adicionando...' : 'Adicionar Alerta'}
-              className="w-full"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="h-[400px] rounded-lg overflow-hidden">
+                <MapContainer
+                  center={[-15.7801, -47.9292]}
+                  zoom={4}
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  <LocationMarker position={position} setPosition={setPosition} />
+                </MapContainer>
+              </div>
+
+              <div>
+                <Formulario
+                  fields={fields}
+                  onSubmit={handleSubmit}
+                  submitLabel={isSubmitting ? 'Adicionando...' : 'Adicionar Alerta'}
+                  className="w-full"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
