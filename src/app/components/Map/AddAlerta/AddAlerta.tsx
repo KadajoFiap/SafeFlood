@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button/Button';
 import Formulario, { FormField } from '@/app/components/Formulario/Formulario';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface LocationMarkerProps {
