@@ -106,18 +106,6 @@ export default function AddAlerta() {
       required: true
     },
     {
-      name: 'data_inicio',
-      label: 'Data de Início',
-      type: 'date',
-      required: true
-    },
-    {
-      name: 'data_fim',
-      label: 'Data de Fim',
-      type: 'date',
-      required: true
-    },
-    {
       name: 'uf',
       label: 'UF',
       type: 'text',
@@ -156,8 +144,8 @@ export default function AddAlerta() {
       </Button>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl">
+        <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center z-[2000]">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 w-full max-w-4xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Adicionar Novo Alerta</h2>
               <button
