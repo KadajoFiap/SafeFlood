@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
 import { transformarAlertas, PontoDeRisco } from '@/app/utils/transformarAlertas';
+import AddAlerta from '../Map/AddAlerta/AddAlerta';
 
 const Map = dynamic(() => import('../Map/MapContent/MapContent'), {
     ssr: false,
@@ -58,6 +59,9 @@ export default function Dashboard() {
                     >
                         <div style={{ width: '100%', height: '100%' }}>
                             {mounted && <Map />}
+                        </div>
+                        <div className="absolute top-4 right-4 z-[1000]">
+                            <AddAlerta />
                         </div>
                     </div>
                 </div>
