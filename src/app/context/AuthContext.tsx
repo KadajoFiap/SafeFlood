@@ -6,11 +6,13 @@ import { authService } from '../services/authService';
 interface AuthUser {
   username?: string;
   email?: string;
+  role?: 'admin' | 'user';
   [key: string]: unknown;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isAdmin: boolean;
   user: AuthUser | null;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
@@ -30,6 +32,7 @@ function parseJwt(token: string): Record<string, unknown> | null {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
@@ -39,10 +42,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       // Decodifica o token para preencher user
       const payload = parseJwt(token);
-      setUser(payload ? {
+      const userData = payload ? {
         username: typeof payload.username === 'string' ? payload.username : (typeof payload.sub === 'string' ? payload.sub : undefined),
-        email: typeof payload.email === 'string' ? payload.email : undefined
-      } : null);
+        email: typeof payload.email === 'string' ? payload.email : undefined,
+        role: (typeof payload.role === 'string' && (payload.role === 'admin' || payload.role === 'user')) ? payload.role as 'admin' | 'user' : 'user'
+      } : null;
+      setUser(userData);
+      setIsAdmin(userData?.role === 'admin');
     }
   }, []);
 
@@ -54,10 +60,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('token', accessToken);
         setIsAuthenticated(true);
         const payload = parseJwt(accessToken);
-        setUser(payload ? {
+        const userData = payload ? {
           username: typeof payload.username === 'string' ? payload.username : (typeof payload.sub === 'string' ? payload.sub : undefined),
-          email: typeof payload.email === 'string' ? payload.email : undefined
-        } : null);
+          email: typeof payload.email === 'string' ? payload.email : undefined,
+          role: (typeof payload.role === 'string' && (payload.role === 'admin' || payload.role === 'user')) ? payload.role as 'admin' | 'user' : 'user'
+        } : null;
+        setUser(userData);
+        setIsAdmin(userData?.role === 'admin');
       } else {
         throw new Error('Token de acesso não encontrado na resposta da API.');
       }
@@ -101,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         isAuthenticated,
+        isAdmin,
         user,
         login,
         register,

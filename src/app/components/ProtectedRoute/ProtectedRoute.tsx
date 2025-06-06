@@ -4,17 +4,19 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+export default function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) {
+  const { isAuthenticated, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login');
+    } else if (requireAdmin && !isAdmin) {
+      router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isAdmin, requireAdmin, router]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || (requireAdmin && !isAdmin)) {
     return null;
   }
 

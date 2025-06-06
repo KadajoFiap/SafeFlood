@@ -1,13 +1,16 @@
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function Menu() {
     const [open, setOpen] = useState(false);
+    const { isAdmin } = useAuth();
 
     const rotas = [
         { nome: "Riscos e rotas de fuga", href: "/riscos" },
         { nome: "Entre em contato", href: "/contato" },
-        { nome: "Integrantes", href: "/integrantes" }
+        { nome: "Integrantes", href: "/integrantes" },
+        ...(isAdmin ? [{ nome: "Painel", href: "/painel" }] : [])
     ];
 
     return (
