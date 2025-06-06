@@ -1,6 +1,18 @@
 'use client';
 
-import Dashboard from '../components/Dashboard/Dashboard';
+import dynamic from 'next/dynamic';
+
+const Dashboard = dynamic(() => import('../components/Dashboard/Dashboard'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[600px] flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="mt-3 text-[#F5FAFF]">Carregando dashboard...</p>
+      </div>
+    </div>
+  )
+});
 
 export default function Riscos() {
     return (
