@@ -20,8 +20,17 @@ export const findByEmail = async (email: string): Promise<User | null> => {
     return null;
   } catch (error: unknown) {
     console.error('Erro ao buscar usuário por email:', error);
-    const err = error as { [key: string]: any };
-    if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError && err.response?.status === 404) {
+    const err = error as Record<string, unknown>;
+    if (
+      error &&
+      typeof error === 'object' &&
+      'isAxiosError' in error &&
+      err.isAxiosError === true &&
+      typeof err.response === 'object' &&
+      err.response &&
+      'status' in err.response &&
+      (err.response as Record<string, unknown>).status === 404
+    ) {
       console.log('Usuário não encontrado');
       return null;
     }
@@ -41,14 +50,34 @@ export const createUser = async (userData: User): Promise<User> => {
     throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
   } catch (error: unknown) {
     console.error('Erro detalhado ao criar usuário:', error);
-    const err = error as { [key: string]: any };
-    if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError) {
-      if (err.response?.status === 409) {
-        throw new Error('Usuário com este email já existe.');
-      }
-      if (err.response?.data?.message) {
-        throw new Error(err.response.data.message);
-      }
+    const err = error as Record<string, unknown>;
+    if (
+      error &&
+      typeof error === 'object' &&
+      'isAxiosError' in error &&
+      err.isAxiosError === true &&
+      typeof err.response === 'object' &&
+      err.response &&
+      'status' in err.response &&
+      (err.response as Record<string, unknown>).status === 409
+    ) {
+      throw new Error('Usuário com este email já existe.');
+    }
+    if (
+      error &&
+      typeof error === 'object' &&
+      'isAxiosError' in error &&
+      err.isAxiosError === true &&
+      typeof err.response === 'object' &&
+      err.response &&
+      'data' in err.response &&
+      (err.response as Record<string, unknown>).data &&
+      typeof (err.response as Record<string, unknown>).data === 'object' &&
+      'message' in ((err.response as Record<string, unknown>).data as Record<string, unknown>)
+    ) {
+      throw new Error(
+        ((err.response as Record<string, unknown>).data as { message: string }).message
+      );
     }
     throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
   }
