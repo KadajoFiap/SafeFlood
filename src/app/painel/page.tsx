@@ -24,13 +24,15 @@ interface Alerta {
     };
 }
 
+type StatusFilter = 'Todos' | 'Ativo' | 'Expirado' | 'Cancelado';
+type NivelFilter = 'Todos' | 'Alto' | 'Médio' | 'Baixo';
+
 export default function Painel() {
     const { user } = useAuth();
     const [alertas, setAlertas] = useState<Alerta[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Ativo' | 'Expirado' | 'Cancelado'>('Todos');
-    const [filtroNivel, setFiltroNivel] = useState<'Todos' | 'Alto' | 'Médio' | 'Baixo'>('Todos');
+    const [filtroStatus, setFiltroStatus] = useState<StatusFilter>('Todos');
+    const [filtroNivel, setFiltroNivel] = useState<NivelFilter>('Todos');
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async (id: number) => {
@@ -55,7 +57,6 @@ export default function Painel() {
             setAlertas(alertas.filter(alerta => alerta.id !== id));
         } catch (err) {
             console.error('Erro ao excluir alerta:', err);
-            setError('Erro ao excluir alerta. Tente novamente.' as any);
         } finally {
             setIsDeleting(false);
         }
@@ -79,7 +80,6 @@ export default function Painel() {
                 console.log('Alertas carregados (detalhado):', JSON.stringify(data, null, 2));
                 setAlertas(data);
             } catch (err) {
-                setError('Erro ao carregar alertas');
                 console.error('Erro:', err);
             } finally {
                 setLoading(false);
@@ -162,7 +162,7 @@ export default function Painel() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                                 <select
                                     value={filtroStatus}
-                                    onChange={(e) => setFiltroStatus(e.target.value as any)}
+                                    onChange={(e) => setFiltroStatus(e.target.value as StatusFilter)}
                                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 >
                                     <option value="Todos">Todos</option>
@@ -174,7 +174,7 @@ export default function Painel() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nível de Risco</label>
                                 <select
                                     value={filtroNivel}
-                                    onChange={(e) => setFiltroNivel(e.target.value as any)}
+                                    onChange={(e) => setFiltroNivel(e.target.value as NivelFilter)}
                                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 >
                                     <option value="Todos">Todos</option>
@@ -203,8 +203,10 @@ export default function Painel() {
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {alertasFiltrados.map((alerta) => {
-                                        const status = new Date(alerta.dataFim) < new Date() ? 'Expirado' : 'Ativo';
-                                        console.log('Renderizando alerta:', alerta);
+                                        const hoje = new Date();
+                                        const dataFim = new Date(alerta.dataFim);
+                                        const status = dataFim < hoje ? 'Expirado' : 'Ativo';
+
                                         return (
                                             <tr key={alerta.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -222,35 +224,25 @@ export default function Painel() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                        status === 'Ativo' ? 'bg-green-100 text-green-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                                        status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                         {status}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">{alerta.municipio} - {alerta.uf}</div>
-                                                    <div className="text-sm text-gray-500">
-                                                        {alerta.latitude?.toFixed(4) || 'N/A'}, {alerta.longitude?.toFixed(4) || 'N/A'}
-                                                    </div>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {alerta.municipio} - {alerta.uf}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">{user?.username || 'Usuário não encontrado'}</div>
-                                                    <div className="text-sm text-gray-500">{user?.email || 'Email não disponível'}</div>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {alerta.usuario.nomeUsuario}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">
-                                                        {new Date(alerta.dataInicio).toLocaleString('pt-BR')}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500">
-                                                        até {new Date(alerta.dataFim).toLocaleString('pt-BR')}
-                                                    </div>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {new Date(alerta.dataInicio).toLocaleDateString('pt-BR')} até {new Date(alerta.dataFim).toLocaleDateString('pt-BR')}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <button 
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button
                                                         onClick={() => handleDelete(alerta.id)}
                                                         disabled={isDeleting}
-                                                        className={`text-red-600 hover:text-red-900 ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
                                                     >
                                                         {isDeleting ? 'Excluindo...' : 'Excluir'}
                                                     </button>
