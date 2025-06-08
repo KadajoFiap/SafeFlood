@@ -17,8 +17,12 @@ import {
   UF_COORDENADAS
 } from '@/app/utils/mapUtils';
 
-// Configure default icon
-configureDefaultIcon();
+// Corrige o ícone padrão do marker para funcionar no Next.js usando imagens da public
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: '/marker-icon-2x.png',
+  iconUrl: '/marker-icon.png',
+  shadowUrl: '/marker-shadow.png',
+});
 
 interface AlertaLocal {
   id: number;
@@ -31,6 +35,26 @@ interface AlertaLocal {
   longitude: number;
   uf: string;
   municipio: string;
+  usuario: {
+    id: number;
+    nomeUsuario: string;
+    email: string;
+    tipoUsuario: string;
+  };
+}
+
+// Função utilitária para retornar o ícone conforme o nível de risco
+export function getRiscoIcon(nivelRisco: string) {
+  let iconUrl = '/risco_baixo.png';
+  if (nivelRisco === 'ALTO') iconUrl = '/risco_alto.png';
+  else if (nivelRisco === 'MEDIO') iconUrl = '/risco_medio.png';
+  return new L.Icon({
+    iconUrl,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+    shadowUrl: undefined,
+  });
 }
 
 export default function MapComponent() {
@@ -110,7 +134,7 @@ export default function MapComponent() {
 
     const fetchLocalData = async () => {
       try {
-        const response = await fetch('https://safeflood-api-java.onrender.com/alertas', {
+        const response = await fetch('/api/alertas', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('idToken')}`
           }
@@ -120,9 +144,35 @@ export default function MapComponent() {
           throw new Error('Erro ao carregar alertas locais');
         }
 
-        const data = await response.json();
-        console.log('Alertas locais carregados:', data);
-        setAlertasLocais(data);
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+          // Limpa as referências circulares
+          const cleanData = data.map((alerta: any) => ({
+            id: alerta.id,
+            titulo: alerta.titulo,
+            descricao: alerta.descricao,
+            nivelRisco: alerta.nivelRisco,
+            dataInicio: alerta.dataInicio,
+            dataFim: alerta.dataFim,
+            latitude: alerta.latitude,
+            longitude: alerta.longitude,
+            uf: alerta.uf,
+            municipio: alerta.municipio,
+            usuario: {
+              id: alerta.usuario?.id,
+              nomeUsuario: alerta.usuario?.nomeUsuario,
+              email: alerta.usuario?.email,
+              tipoUsuario: alerta.usuario?.tipoUsuario
+            }
+          }));
+          console.log('Alertas locais carregados:', cleanData);
+          setAlertasLocais(cleanData);
+        } catch (parseError) {
+          console.error('Erro ao fazer parse do JSON:', text);
+          throw new Error('Resposta inválida do servidor');
+        }
       } catch (err) {
         console.error('Erro ao carregar alertas locais:', err);
         setError('Falha ao carregar alertas locais');
@@ -131,9 +181,15 @@ export default function MapComponent() {
     };
 
     const fetchAllData = async () => {
-      setLoading(true);
-      await Promise.all([fetchINMETData(), fetchLocalData()]);
-      setLoading(false);
+      try {
+        setLoading(true);
+        await Promise.all([fetchINMETData(), fetchLocalData()]);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        setError('Falha ao carregar dados');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAllData();
@@ -252,7 +308,7 @@ export default function MapComponent() {
               <Marker
                 key={`local-${alerta.id}-${idx}`}
                 position={[alerta.latitude, alerta.longitude]}
-                icon={getIconForRiskLevel(alerta.nivelRisco)}
+                icon={getRiscoIcon(alerta.nivelRisco)}
               >
                 <Popup>
                   <div className="min-w-[250px]">

@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button/Button';
 import Formulario, { FormField } from '@/app/components/Formulario/Formulario';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { userService } from '@/app/services/userService';
+import { findByEmail, createUser } from '@/app/services/userService';
+import { createAlerta } from '@/app/services/alertaService';
 import 'leaflet/dist/leaflet.css';
 
 interface LocationMarkerProps {
@@ -54,8 +55,6 @@ export default function AddAlerta() {
 
     try {
       const payload = JSON.parse(atob(idToken.split('.')[1]));
-      console.log('Token payload:', payload);
-      
       const username = payload['cognito:username'];
       const userEmail = payload.email;
       const userRole = payload['custom:role'] || 'user';
@@ -68,81 +67,61 @@ export default function AddAlerta() {
       setIsSubmitting(true);
       setError('');
 
-      // Primeiro, verifica se o usuário já existe
+      // Busca usuário no banco pelo email
       let usuario = null;
       try {
-        usuario = await userService.findByEmail(userEmail);
-        console.log('Resultado da busca por email:', usuario);
+        usuario = await findByEmail(userEmail);
       } catch (error) {
-        console.error('Erro ao buscar usuário:', error);
-        throw new Error('Erro ao verificar usuário. Por favor, tente novamente.');
+        if ((error as any).response?.status !== 404) {
+          throw error;
+        }
       }
-      
-      // Se não existir, cria o usuário local
+
+      // Se não existe, cadastra o usuário
       if (!usuario) {
-        console.log('Criando novo usuário local...');
         try {
-          usuario = await userService.createUser({
+          usuario = await createUser({
             nomeUsuario: username,
             email: userEmail,
             tipoUsuario: userRole
           });
-          console.log('Usuário local criado:', usuario);
-        } catch (error) {
-          console.error('Erro ao criar usuário:', error);
+        } catch (error: any) {
+          if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+          }
           throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
         }
       }
 
-      if (!usuario) {
-        throw new Error('Falha ao criar ou recuperar usuário. Por favor, tente novamente.');
+      if (!usuario || !usuario.id) {
+        setError('Não foi possível identificar o usuário.');
+        return;
       }
 
-      const today = new Date();
-      const endDate = new Date();
-      endDate.setDate(today.getDate() + 7); // Data fim padrão: 7 dias após a criação
+      const now = new Date();
+      const endDate = new Date(now.getTime() + (4 * 60 * 60 * 1000)); // 4 horas depois
 
-      const alertData = {
+      const alertaData = {
         titulo: data.titulo,
         descricao: data.descricao,
         nivelRisco: data.nivel_risco,
-        dataInicio: today.toISOString().split('T')[0],
-        dataFim: endDate.toISOString().split('T')[0],
-        alertaCriadoEm: today.toISOString().split('T')[0],
+        dataInicio: now.toISOString(),
+        dataFim: endDate.toISOString(),
         latitude: position[0],
         longitude: position[1],
         uf: data.uf.toUpperCase(),
         municipio: data.municipio,
-        usuarioId: usuario.id
+        usuario: { id: usuario.id }
       };
 
-      console.log('Dados do alerta sendo enviados:', alertData);
-      
-      const response = await fetch('https://safeflood-api-java.onrender.com/alertas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify(alertData),
-      });
+      console.log('Payload enviado para createAlerta:', alertaData);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-        console.error('Resposta de erro da API:', errorData);
-        throw new Error(errorData.message || 'Erro ao criar alerta');
-      }
-
-      const responseData = await response.json();
-      console.log('Resposta da API:', responseData);
-
+      await createAlerta(alertaData);
       setIsModalOpen(false);
       setPosition(null);
-      // Recarregar a página ou atualizar a lista de alertas
       window.location.reload();
     } catch (err) {
-      console.error('Erro detalhado ao adicionar alerta:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao adicionar alerta. Tente novamente.');
+      setError(err instanceof Error ? err.message : 'Erro ao adicionar alerta. Por favor, tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -176,9 +155,9 @@ export default function AddAlerta() {
       label: 'Nível de Risco',
       type: 'select',
       options: [
-        { value: 'Alto', label: 'Alto' },
-        { value: 'Médio', label: 'Médio' },
-        { value: 'Baixo', label: 'Baixo' }
+        { value: 'ALTO', label: 'Alto' },
+        { value: 'MEDIO', label: 'Médio' },
+        { value: 'BAIXO', label: 'Baixo' }
       ],
       required: true
     },

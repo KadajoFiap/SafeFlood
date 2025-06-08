@@ -47,7 +47,7 @@ export default function Dashboard() {
                 setPontosINMET(transformarAlertas(inmetData));
 
                 // Busca alertas locais
-                const localRes = await fetch('https://safeflood-api-java.onrender.com/alertas', {
+                const localRes = await fetch('/api/alertas', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('idToken')}`
                     }

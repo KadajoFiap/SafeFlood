@@ -42,7 +42,7 @@ export default function Painel() {
 
         try {
             setIsDeleting(true);
-            const response = await fetch(`https://safeflood-api-java.onrender.com/alertas/${id}`, {
+            const response = await fetch(`/api/alertas/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('idToken')}`
@@ -53,7 +53,6 @@ export default function Painel() {
                 throw new Error('Erro ao excluir alerta');
             }
 
-            // Atualiza a lista de alertas removendo o alerta excluído
             setAlertas(alertas.filter(alerta => alerta.id !== id));
         } catch (err) {
             console.error('Erro ao excluir alerta:', err);
@@ -66,7 +65,7 @@ export default function Painel() {
         const fetchAlertas = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('https://safeflood-api-java.onrender.com/alertas', {
+                const response = await fetch('/api/alertas', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('idToken')}`
                     }
