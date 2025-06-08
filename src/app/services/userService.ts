@@ -18,9 +18,9 @@ export const findByEmail = async (email: string): Promise<User | null> => {
       return response.data;
     }
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao buscar usuário por email:', error);
-    if (error.response?.status === 404) {
+    if (error && typeof error === 'object' && 'isAxiosError' in error && (error as any).isAxiosError && (error as any).response?.status === 404) {
       console.log('Usuário não encontrado');
       return null;
     }
@@ -38,22 +38,16 @@ export const createUser = async (userData: User): Promise<User> => {
       return response.data;
     }
     throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
-  } catch (error: any) {
-    console.error('Erro detalhado ao criar usuário:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      headers: error.response?.headers
-    });
-    
-    if (error.response?.status === 409) {
-      throw new Error('Usuário com este email já existe.');
+  } catch (error: unknown) {
+    console.error('Erro detalhado ao criar usuário:', error);
+    if (error && typeof error === 'object' && 'isAxiosError' in error && (error as any).isAxiosError) {
+      if ((error as any).response?.status === 409) {
+        throw new Error('Usuário com este email já existe.');
+      }
+      if ((error as any).response?.data?.message) {
+        throw new Error((error as any).response.data.message);
+      }
     }
-    
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    
     throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
   }
 };
