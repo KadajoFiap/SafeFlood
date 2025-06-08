@@ -26,7 +26,7 @@ export default function Hero() {
                     <div className="flex flex-col md:flex-row gap-4 pt-4">
                         <Button className="w-full bg-white md:text-sm xl:text-base"
                             onClick={() => {
-                                router.push('/riscos');
+                                router.push('/sobre');
                             }}>
                             Conheça o SafeFlood
                         </Button>
