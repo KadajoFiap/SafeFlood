@@ -20,9 +20,23 @@ import {
 // Configure default icon
 configureDefaultIcon();
 
+interface AlertaLocal {
+  id: number;
+  titulo: string;
+  descricao: string;
+  nivelRisco: 'Alto' | 'Médio' | 'Baixo';
+  dataInicio: string;
+  dataFim: string;
+  latitude: number;
+  longitude: number;
+  uf: string;
+  municipio: string;
+}
+
 export default function MapComponent() {
   const [mounted, setMounted] = useState(false);
-  const [pontos, setPontos] = useState<PontoDeRisco[]>([]);
+  const [pontosINMET, setPontosINMET] = useState<PontoDeRisco[]>([]);
+  const [alertasLocais, setAlertasLocais] = useState<AlertaLocal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<LatLngExpression>(center);
@@ -35,17 +49,16 @@ export default function MapComponent() {
   useEffect(() => {
     if (!mounted) return;
 
-    const fetchData = async () => {
+    const fetchINMETData = async () => {
       try {
-        setLoading(true);
         const res = await fetch('/api/inmet-alertas');
 
         if (!res.ok) {
-          throw new Error(`Erro na API: ${res.status}`);
+          throw new Error(`Erro na API INMET: ${res.status}`);
         }
 
         const data = await res.json();
-        console.log('Dados recebidos:', data);
+        console.log('Dados INMET recebidos:', data);
 
         const alertas: AlertaINMET[] = [
           ...(data[0]?.hoje || []),
@@ -86,26 +99,55 @@ export default function MapComponent() {
           }
         }
 
-        setPontos(transformados);
-
-        if (transformados.length > 0) {
-          setMapCenter([transformados[0].latitude, transformados[0].longitude]);
-        }
-
+        setPontosINMET(transformados);
         setError(null);
       } catch (err) {
-        console.error('Erro ao processar alertas:', err);
+        console.error('Erro ao processar alertas INMET:', err);
         setError('Falha ao carregar alertas meteorológicos');
-        setPontos([]);
-      } finally {
-        setLoading(false);
+        setPontosINMET([]);
       }
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    const fetchLocalData = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/alertas', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao carregar alertas locais');
+        }
+
+        const data = await response.json();
+        console.log('Alertas locais carregados:', data);
+        setAlertasLocais(data);
+      } catch (err) {
+        console.error('Erro ao carregar alertas locais:', err);
+        setError('Falha ao carregar alertas locais');
+        setAlertasLocais([]);
+      }
+    };
+
+    const fetchAllData = async () => {
+      setLoading(true);
+      await Promise.all([fetchINMETData(), fetchLocalData()]);
+      setLoading(false);
+    };
+
+    fetchAllData();
+    const interval = setInterval(fetchAllData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [mounted]);
+
+  // Efeito para atualizar o centro do mapa quando os pontos mudarem
+  useEffect(() => {
+    const totalPontos = [...pontosINMET, ...alertasLocais];
+    if (totalPontos.length > 0) {
+      setMapCenter([totalPontos[0].latitude, totalPontos[0].longitude]);
+    }
+  }, [pontosINMET, alertasLocais]);
 
   if (!mounted) {
     return null;
@@ -116,7 +158,7 @@ export default function MapComponent() {
       <div className="w-full h-full flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-3 text-gray-600">Carregando alertas meteorológicos...</p>
+          <p className="mt-3 text-gray-600">Carregando alertas...</p>
         </div>
       </div>
     );
@@ -140,6 +182,8 @@ export default function MapComponent() {
     );
   }
 
+  const totalPontos = [...pontosINMET, ...alertasLocais];
+
   return (
     <div className="relative w-full h-full">
       <MapContainer
@@ -156,46 +200,92 @@ export default function MapComponent() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        {pontos.length === 0 ? (
+        {totalPontos.length === 0 ? (
           <div className="leaflet-top leaflet-left">
             <div className="leaflet-control leaflet-bar bg-white p-4 rounded shadow">
               <p className="text-gray-700">Nenhum alerta encontrado no momento</p>
             </div>
           </div>
         ) : (
-          pontos.map((ponto, idx) => (
-            <Marker
-              key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}-${idx}`}
-              position={[ponto.latitude, ponto.longitude]}
-              icon={getIconForRiskLevel(ponto.nivel)}
-            >
-              <Popup>
-                <div className="min-w-[250px]">
-                  <h3 className="font-bold text-lg text-gray-800">
-                    {ponto.municipio} - {ponto.uf}
-                  </h3>
-                  <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${ponto.nivel === 'Alto' ? 'bg-red-100 text-red-800' :
+          <>
+            {/* Marcadores INMET */}
+            {pontosINMET.map((ponto, idx) => (
+              <Marker
+                key={`inmet-${ponto.id}-${idx}`}
+                position={[ponto.latitude, ponto.longitude]}
+                icon={getIconForRiskLevel(ponto.nivel)}
+              >
+                <Popup>
+                  <div className="min-w-[250px]">
+                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium mb-2">
+                      Alerta INMET
+                    </div>
+                    <h3 className="font-bold text-lg text-gray-800">
+                      {ponto.municipio} - {ponto.uf}
+                    </h3>
+                    <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${
+                      ponto.nivel === 'Alto' ? 'bg-red-100 text-red-800' :
                       ponto.nivel === 'Médio' ? 'bg-orange-100 text-orange-800' :
-                        'bg-green-100 text-green-800'
+                      'bg-green-100 text-green-800'
                     }`}>
-                    Risco: {ponto.nivel}
+                      Risco: {ponto.nivel}
+                    </div>
+                    <p className="mt-2 text-gray-700">{ponto.descricao}</p>
+
+                    <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
+                      <span className="font-medium">Início:</span>
+                      <span>{new Date(ponto.inicio).toLocaleString('pt-BR')}</span>
+
+                      <span className="font-medium">Fim:</span>
+                      <span>{new Date(ponto.fim).toLocaleString('pt-BR')}</span>
+
+                      <span className="font-medium">Coordenadas:</span>
+                      <span>{ponto.latitude.toFixed(4)}, {ponto.longitude.toFixed(4)}</span>
+                    </div>
                   </div>
-                  <p className="mt-2 text-gray-700">{ponto.descricao}</p>
+                </Popup>
+              </Marker>
+            ))}
 
-                  <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
-                    <span className="font-medium">Início:</span>
-                    <span>{new Date(ponto.inicio).toLocaleString('pt-BR')}</span>
+            {/* Marcadores Locais */}
+            {alertasLocais.map((alerta, idx) => (
+              <Marker
+                key={`local-${alerta.id}-${idx}`}
+                position={[alerta.latitude, alerta.longitude]}
+                icon={getIconForRiskLevel(alerta.nivelRisco)}
+              >
+                <Popup>
+                  <div className="min-w-[250px]">
+                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium mb-2">
+                      Alerta Local
+                    </div>
+                    <h3 className="font-bold text-lg text-gray-800">
+                      {alerta.municipio} - {alerta.uf}
+                    </h3>
+                    <div className={`mt-1 px-2 py-1 inline-block rounded text-sm font-medium ${
+                      alerta.nivelRisco === 'Alto' ? 'bg-red-100 text-red-800' :
+                      alerta.nivelRisco === 'Médio' ? 'bg-orange-100 text-orange-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      Risco: {alerta.nivelRisco}
+                    </div>
+                    <p className="mt-2 text-gray-700">{alerta.descricao}</p>
 
-                    <span className="font-medium">Fim:</span>
-                    <span>{new Date(ponto.fim).toLocaleString('pt-BR')}</span>
+                    <div className="mt-3 grid grid-cols-2 gap-1 text-sm">
+                      <span className="font-medium">Início:</span>
+                      <span>{new Date(alerta.dataInicio).toLocaleString('pt-BR')}</span>
 
-                    <span className="font-medium">Coordenadas:</span>
-                    <span>{ponto.latitude.toFixed(4)}, {ponto.longitude.toFixed(4)}</span>
+                      <span className="font-medium">Fim:</span>
+                      <span>{new Date(alerta.dataFim).toLocaleString('pt-BR')}</span>
+
+                      <span className="font-medium">Coordenadas:</span>
+                      <span>{alerta.latitude.toFixed(4)}, {alerta.longitude.toFixed(4)}</span>
+                    </div>
                   </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))
+                </Popup>
+              </Marker>
+            ))}
+          </>
         )}
       </MapContainer>
 

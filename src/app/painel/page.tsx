@@ -5,67 +5,51 @@ import { useState, useEffect } from 'react';
 import ProtectedRoute from '../components/ProtectedRoute/ProtectedRoute';
 import { useAuth } from '../context/AuthContext';
 
-interface AlertaManual {
-    id: string;
+interface Alerta {
+    id: number;
     titulo: string;
     descricao: string;
-    nivel: 'Alto' | 'Médio' | 'Baixo';
-    data_inicio: string;
-    data_fim: string;
-    criado_por: {
-        username: string;
+    nivelRisco: 'Alto' | 'Médio' | 'Baixo';
+    dataInicio: string;
+    dataFim: string;
+    alertaCriadoEm: string;
+    latitude: number;
+    longitude: number;
+    uf: string;
+    municipio: string;
+    usuario: {
+        id: number;
+        nomeUsuario: string;
         email: string;
-    };
-    criado_em: string;
-    status: 'Ativo' | 'Expirado' | 'Cancelado';
-    localizacao: {
-        latitude: number;
-        longitude: number;
-        municipio: string;
-        uf: string;
+        tipoUsuario: string;
     };
 }
 
 export default function Painel() {
-    const { user, isAdmin } = useAuth();
-    const [alertas, setAlertas] = useState<AlertaManual[]>([]);
+    const { user } = useAuth();
+    const [alertas, setAlertas] = useState<Alerta[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Ativo' | 'Expirado' | 'Cancelado'>('Todos');
     const [filtroNivel, setFiltroNivel] = useState<'Todos' | 'Alto' | 'Médio' | 'Baixo'>('Todos');
 
     useEffect(() => {
-        // TODO: Implement API call to fetch manual alerts
         const fetchAlertas = async () => {
             try {
                 setLoading(true);
-                // const response = await fetch('/api/alertas-manuais');
-                // const data = await response.json();
-                // setAlertas(data);
-                
-                // Temporary mock data
-                setAlertas([
-                    {
-                        id: '1',
-                        titulo: 'Alerta de Enchente',
-                        descricao: 'Risco de enchente na região central',
-                        nivel: 'Alto',
-                        data_inicio: '2024-03-20T10:00:00',
-                        data_fim: '2024-03-21T10:00:00',
-                        criado_por: {
-                            username: 'admin',
-                            email: 'admin@example.com'
-                        },
-                        criado_em: '2024-03-20T09:00:00',
-                        status: 'Ativo',
-                        localizacao: {
-                            latitude: -23.5505,
-                            longitude: -46.6333,
-                            municipio: 'São Paulo',
-                            uf: 'SP'
-                        }
+                const response = await fetch('http://localhost:8080/alertas', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('idToken')}`
                     }
-                ]);
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar alertas');
+                }
+
+                const data = await response.json();
+                console.log('Alertas carregados (detalhado):', JSON.stringify(data, null, 2));
+                setAlertas(data);
             } catch (err) {
                 setError('Erro ao carregar alertas');
                 console.error('Erro:', err);
@@ -78,19 +62,21 @@ export default function Painel() {
     }, []);
 
     const alertasFiltrados = alertas.filter(alerta => {
-        const statusCorreto = filtroStatus === 'Todos' || alerta.status === filtroStatus;
-        const nivelCorreto = filtroNivel === 'Todos' || alerta.nivel === filtroNivel;
+        const hoje = new Date();
+        const dataFim = new Date(alerta.dataFim);
+        const status = dataFim < hoje ? 'Expirado' : 'Ativo';
+        const statusCorreto = filtroStatus === 'Todos' || status === filtroStatus;
+        const nivelCorreto = filtroNivel === 'Todos' || alerta.nivelRisco === filtroNivel;
         return statusCorreto && nivelCorreto;
     });
 
     const estatisticas = {
         total: alertas.length,
-        ativos: alertas.filter(a => a.status === 'Ativo').length,
-        expirados: alertas.filter(a => a.status === 'Expirado').length,
-        cancelados: alertas.filter(a => a.status === 'Cancelado').length,
-        alto: alertas.filter(a => a.nivel === 'Alto').length,
-        medio: alertas.filter(a => a.nivel === 'Médio').length,
-        baixo: alertas.filter(a => a.nivel === 'Baixo').length
+        ativos: alertas.filter(a => new Date(a.dataFim) >= new Date()).length,
+        expirados: alertas.filter(a => new Date(a.dataFim) < new Date()).length,
+        alto: alertas.filter(a => a.nivelRisco === 'Alto').length,
+        medio: alertas.filter(a => a.nivelRisco === 'Médio').length,
+        baixo: alertas.filter(a => a.nivelRisco === 'Baixo').length
     };
 
     if (loading) {
@@ -136,8 +122,8 @@ export default function Painel() {
                             <p className="mt-1 text-2xl font-semibold text-orange-600">{estatisticas.expirados}</p>
                         </div>
                         <div className="bg-white rounded-lg p-4 shadow-lg">
-                            <h3 className="text-sm font-medium text-gray-500">Alertas Cancelados</h3>
-                            <p className="mt-1 text-2xl font-semibold text-red-600">{estatisticas.cancelados}</p>
+                            <h3 className="text-sm font-medium text-gray-500">Nível Alto</h3>
+                            <p className="mt-1 text-2xl font-semibold text-red-600">{estatisticas.alto}</p>
                         </div>
                     </div>
 
@@ -154,7 +140,6 @@ export default function Painel() {
                                     <option value="Todos">Todos</option>
                                     <option value="Ativo">Ativos</option>
                                     <option value="Expirado">Expirados</option>
-                                    <option value="Cancelado">Cancelados</option>
                                 </select>
                             </div>
                             <div>
@@ -189,54 +174,57 @@ export default function Painel() {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {alertasFiltrados.map((alerta) => (
-                                        <tr key={alerta.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">{alerta.titulo}</div>
-                                                <div className="text-sm text-gray-500">{alerta.descricao}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    alerta.nivel === 'Alto' ? 'bg-red-100 text-red-800' :
-                                                    alerta.nivel === 'Médio' ? 'bg-orange-100 text-orange-800' :
-                                                    'bg-green-100 text-green-800'
-                                                }`}>
-                                                    {alerta.nivel}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    alerta.status === 'Ativo' ? 'bg-green-100 text-green-800' :
-                                                    alerta.status === 'Expirado' ? 'bg-gray-100 text-gray-800' :
-                                                    'bg-red-100 text-red-800'
-                                                }`}>
-                                                    {alerta.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{alerta.localizacao.municipio} - {alerta.localizacao.uf}</div>
-                                                <div className="text-sm text-gray-500">
-                                                    {alerta.localizacao.latitude.toFixed(4)}, {alerta.localizacao.longitude.toFixed(4)}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">{alerta.criado_por.username}</div>
-                                                <div className="text-sm text-gray-500">{alerta.criado_por.email}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">
-                                                    {new Date(alerta.data_inicio).toLocaleString('pt-BR')}
-                                                </div>
-                                                <div className="text-sm text-gray-500">
-                                                    até {new Date(alerta.data_fim).toLocaleString('pt-BR')}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <button className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
-                                                <button className="text-red-600 hover:text-red-900">Excluir</button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {alertasFiltrados.map((alerta) => {
+                                        const status = new Date(alerta.dataFim) < new Date() ? 'Expirado' : 'Ativo';
+                                        console.log('Renderizando alerta:', alerta);
+                                        return (
+                                            <tr key={alerta.id}>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm font-medium text-gray-900">{alerta.titulo}</div>
+                                                    <div className="text-sm text-gray-500">{alerta.descricao}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        alerta.nivelRisco === 'Alto' ? 'bg-red-100 text-red-800' :
+                                                        alerta.nivelRisco === 'Médio' ? 'bg-orange-100 text-orange-800' :
+                                                        'bg-green-100 text-green-800'
+                                                    }`}>
+                                                        {alerta.nivelRisco}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        status === 'Ativo' ? 'bg-green-100 text-green-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                        {status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm text-gray-900">{alerta.municipio} - {alerta.uf}</div>
+                                                    <div className="text-sm text-gray-500">
+                                                        {alerta.latitude?.toFixed(4) || 'N/A'}, {alerta.longitude?.toFixed(4) || 'N/A'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm text-gray-900">{user?.username || 'Usuário não encontrado'}</div>
+                                                    <div className="text-sm text-gray-500">{user?.email || 'Email não disponível'}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm text-gray-900">
+                                                        {new Date(alerta.dataInicio).toLocaleString('pt-BR')}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        até {new Date(alerta.dataFim).toLocaleString('pt-BR')}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <button className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
+                                                    <button className="text-red-600 hover:text-red-900">Excluir</button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

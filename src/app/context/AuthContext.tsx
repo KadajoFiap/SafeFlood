@@ -24,8 +24,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function parseJwt(token: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(atob(token.split('.')[1]));
-  } catch {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('JWT Payload:', payload);
+    console.log('Raw role from token:', payload['custom:role']);
+    console.log('Role type:', typeof payload['custom:role']);
+    return payload;
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
     return null;
   }
 }
@@ -37,38 +42,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check if user is authenticated on mount
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('idToken');
+    console.log('Stored ID token:', token);
     if (token) {
       setIsAuthenticated(true);
       // Decodifica o token para preencher user
       const payload = parseJwt(token);
+      console.log('Token payload in useEffect:', payload);
       const userData = payload ? {
-        username: typeof payload.username === 'string' ? payload.username : (typeof payload.sub === 'string' ? payload.sub : undefined),
+        username: typeof payload['cognito:username'] === 'string' ? payload['cognito:username'] : (typeof payload.sub === 'string' ? payload.sub : undefined),
         email: typeof payload.email === 'string' ? payload.email : undefined,
-        role: (typeof payload.role === 'string' && (payload.role === 'admin' || payload.role === 'user')) ? payload.role as 'admin' | 'user' : 'user'
+        role: (typeof payload['custom:role'] === 'string' && (payload['custom:role'] === 'admin' || payload['custom:role'] === 'user')) ? payload['custom:role'] as 'admin' | 'user' : 'user'
       } : null;
+      console.log('Processed user data:', userData);
+      console.log('Role from processed data:', userData?.role);
       setUser(userData);
-      setIsAdmin(userData?.role === 'admin');
+      const isUserAdmin = userData?.role === 'admin';
+      console.log('Is user admin?', isUserAdmin);
+      setIsAdmin(isUserAdmin);
     }
   }, []);
 
   const login = async (username: string, password: string) => {
     try {
+      console.log('Login attempt for user:', username);
       const response = await authService.login({ username, password });
-      const accessToken = response.tokens?.AccessToken;
-      if (accessToken) {
-        localStorage.setItem('token', accessToken);
+      const idToken = response.tokens?.IdToken;
+      console.log('ID token received:', idToken);
+      if (idToken) {
+        localStorage.setItem('idToken', idToken);
         setIsAuthenticated(true);
-        const payload = parseJwt(accessToken);
+        const payload = parseJwt(idToken);
+        console.log('Token payload in login:', payload);
         const userData = payload ? {
-          username: typeof payload.username === 'string' ? payload.username : (typeof payload.sub === 'string' ? payload.sub : undefined),
+          username: typeof payload['cognito:username'] === 'string' ? payload['cognito:username'] : (typeof payload.sub === 'string' ? payload.sub : undefined),
           email: typeof payload.email === 'string' ? payload.email : undefined,
-          role: (typeof payload.role === 'string' && (payload.role === 'admin' || payload.role === 'user')) ? payload.role as 'admin' | 'user' : 'user'
+          role: (typeof payload['custom:role'] === 'string' && (payload['custom:role'] === 'admin' || payload['custom:role'] === 'user')) ? payload['custom:role'] as 'admin' | 'user' : 'user'
         } : null;
+        console.log('Processed user data in login:', userData);
+        console.log('Role from processed data in login:', userData?.role);
         setUser(userData);
-        setIsAdmin(userData?.role === 'admin');
+        const isUserAdmin = userData?.role === 'admin';
+        console.log('Is user admin in login?', isUserAdmin);
+        setIsAdmin(isUserAdmin);
       } else {
-        throw new Error('Token de acesso não encontrado na resposta da API.');
+        throw new Error('Token de ID não encontrado na resposta da API.');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -97,9 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await authService.logout();
-      localStorage.removeItem('token');
+      localStorage.removeItem('idToken');
       setIsAuthenticated(false);
       setUser(null);
+      setIsAdmin(false);
     } catch (error) {
       console.error('Logout error:', error);
       throw error;

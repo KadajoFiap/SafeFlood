@@ -73,7 +73,7 @@ export default function LoginPage() {
                         compact={true}
                     >
                         {error && (
-                            <div className="text-red-600 text-center text-sm font-semibold mb-2">{error}</div>
+                            <div className="text-red-600 text-center text-sm font-semibold mb-2 mt-2">{error}</div>
                         )}
                         <div className="flex flex-col items-center space-y-2 pt-6">
                             <Link

@@ -17,6 +17,7 @@ export interface LoginData {
 }
 
 export const authService = {
+  // Serviço Amazon Cognito
   async register(data: RegisterData) {
     const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
@@ -25,10 +26,12 @@ export const authService = {
       },
       body: JSON.stringify(data),
     });
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Erro ao registrar');
     }
+
     return await response.json();
   },
 
@@ -44,6 +47,7 @@ export const authService = {
   },
 
   async login(data: LoginData) {
+    console.log('Login request data:', data);
     const response = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: {
@@ -51,16 +55,36 @@ export const authService = {
       },
       body: JSON.stringify(data),
     });
-    return response.json();
+    
+    const result = await response.json();
+    console.log('Login API response:', result);
+    
+    if (result.tokens?.IdToken) {
+      const token = result.tokens.IdToken;
+      console.log('ID Token:', token);
+      // Decodificar o token para verificar o payload
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Token payload:', payload);
+        console.log('User role from token:', payload.role);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
+    }
+
+    return result;
   },
 
   async logout() {
+    const token = localStorage.getItem('idToken');
+    console.log('Logout token:', token);
     const response = await fetch(`${API_BASE_URL}/logout`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
     return response.json();
-  },
+  }
 }; 

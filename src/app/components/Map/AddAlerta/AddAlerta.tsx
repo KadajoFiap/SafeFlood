@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button/Button';
 import Formulario, { FormField } from '@/app/components/Formulario/Formulario';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { userService } from '@/app/services/userService';
+import { authService } from '@/app/services/authService';
 import 'leaflet/dist/leaflet.css';
 
 interface LocationMarkerProps {
@@ -24,7 +26,7 @@ function LocationMarker({ position, setPosition }: LocationMarkerProps) {
 }
 
 export default function AddAlerta() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,34 +47,103 @@ export default function AddAlerta() {
       return;
     }
 
-    setIsSubmitting(true);
-    setError('');
+    const idToken = localStorage.getItem('idToken');
+    if (!idToken) {
+      setError('Usuário não autenticado. Por favor, faça login.');
+      return;
+    }
+
     try {
+      const payload = JSON.parse(atob(idToken.split('.')[1]));
+      console.log('Token payload:', payload);
+      
+      const username = payload['cognito:username'];
+      const userEmail = payload.email;
+      const userRole = payload['custom:role'] || 'user';
+
+      if (!username || !userEmail) {
+        setError('Token inválido. Por favor, faça login novamente.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError('');
+
+      // Primeiro, verifica se o usuário já existe
+      let usuario = null;
+      try {
+        usuario = await userService.findByEmail(userEmail);
+        console.log('Resultado da busca por email:', usuario);
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
+        throw new Error('Erro ao verificar usuário. Por favor, tente novamente.');
+      }
+      
+      // Se não existir, cria o usuário local
+      if (!usuario) {
+        console.log('Criando novo usuário local...');
+        try {
+          usuario = await userService.createUser({
+            nomeUsuario: username,
+            email: userEmail,
+            tipoUsuario: userRole
+          });
+          console.log('Usuário local criado:', usuario);
+        } catch (error) {
+          console.error('Erro ao criar usuário:', error);
+          throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
+        }
+      }
+
+      if (!usuario) {
+        throw new Error('Falha ao criar ou recuperar usuário. Por favor, tente novamente.');
+      }
+
+      const today = new Date();
+      const endDate = new Date();
+      endDate.setDate(today.getDate() + 7); // Data fim padrão: 7 dias após a criação
+
       const alertData = {
-        ...data,
+        titulo: data.titulo,
+        descricao: data.descricao,
+        nivelRisco: data.nivel_risco,
+        dataInicio: today.toISOString().split('T')[0],
+        dataFim: endDate.toISOString().split('T')[0],
+        alertaCriadoEm: today.toISOString().split('T')[0],
         latitude: position[0],
         longitude: position[1],
-        uf: data.uf,
-        municipio: data.municipio
+        uf: data.uf.toUpperCase(),
+        municipio: data.municipio,
+        usuarioId: usuario.id
       };
+
+      console.log('Dados do alerta sendo enviados:', alertData);
       
-      const response = await fetch('/api/alertas', {
+      const response = await fetch('http://localhost:8080/alertas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify(alertData),
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao criar alerta');
+        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+        console.error('Resposta de erro da API:', errorData);
+        throw new Error(errorData.message || 'Erro ao criar alerta');
       }
+
+      const responseData = await response.json();
+      console.log('Resposta da API:', responseData);
 
       setIsModalOpen(false);
       setPosition(null);
+      // Recarregar a página ou atualizar a lista de alertas
+      window.location.reload();
     } catch (err) {
-      setError('Erro ao adicionar alerta. Tente novamente.');
-      console.error('Erro ao adicionar alerta:', err);
+      console.error('Erro detalhado ao adicionar alerta:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao adicionar alerta. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,14 +155,22 @@ export default function AddAlerta() {
       label: 'Título',
       type: 'text',
       placeholder: 'Digite o título do alerta',
-      required: true
+      required: true,
+      validation: {
+        pattern: /^.{1,100}$/,
+        message: 'O título deve ter no máximo 100 caracteres'
+      }
     },
     {
       name: 'descricao',
       label: 'Descrição',
       type: 'textarea',
       placeholder: 'Digite a descrição do alerta',
-      required: true
+      required: true,
+      validation: {
+        pattern: /^.{1,500}$/,
+        message: 'A descrição deve ter no máximo 500 caracteres'
+      }
     },
     {
       name: 'nivel_risco',
@@ -109,14 +188,22 @@ export default function AddAlerta() {
       label: 'UF',
       type: 'text',
       placeholder: 'Ex: SP',
-      required: true
+      required: true,
+      validation: {
+        pattern: /^[A-Z]{2}$/,
+        message: 'A UF deve ter 2 caracteres maiúsculos'
+      }
     },
     {
       name: 'municipio',
       label: 'Município',
       type: 'text',
       placeholder: 'Digite o nome do município',
-      required: true
+      required: true,
+      validation: {
+        pattern: /^.{1,100}$/,
+        message: 'O nome do município deve ter no máximo 100 caracteres'
+      }
     }
   ];
 
