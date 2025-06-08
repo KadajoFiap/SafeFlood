@@ -7,7 +7,6 @@ import Button from '@/app/components/Button/Button';
 import Formulario, { FormField } from '@/app/components/Formulario/Formulario';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { userService } from '@/app/services/userService';
-import { authService } from '@/app/services/authService';
 import 'leaflet/dist/leaflet.css';
 
 interface LocationMarkerProps {
@@ -26,7 +25,7 @@ function LocationMarker({ position, setPosition }: LocationMarkerProps) {
 }
 
 export default function AddAlerta() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

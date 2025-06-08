@@ -5,6 +5,19 @@ import { useState, useEffect } from 'react';
 import { transformarAlertas, PontoDeRisco } from '@/app/utils/transformarAlertas';
 import AddAlerta from '../Map/AddAlerta/AddAlerta';
 
+interface AlertaLocal {
+    id: number;
+    titulo: string;
+    descricao: string;
+    nivelRisco: 'Alto' | 'Médio' | 'Baixo';
+    dataInicio: string;
+    dataFim: string;
+    latitude: number;
+    longitude: number;
+    uf: string;
+    municipio: string;
+}
+
 const Map = dynamic(() => import('../Map/MapContent/MapContent'), {
     ssr: false,
     loading: () => (
@@ -22,7 +35,7 @@ import DashboardContent from "./DashboardContent/DashboardContent";
 export default function Dashboard() {
     const [mounted, setMounted] = useState(false);
     const [pontosINMET, setPontosINMET] = useState<PontoDeRisco[]>([]);
-    const [alertasLocais, setAlertasLocais] = useState<any[]>([]);
+    const [alertasLocais, setAlertasLocais] = useState<AlertaLocal[]>([]);
 
     useEffect(() => {
         setMounted(true);

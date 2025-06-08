@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -56,7 +55,7 @@ export default function Painel() {
             setAlertas(alertas.filter(alerta => alerta.id !== id));
         } catch (err) {
             console.error('Erro ao excluir alerta:', err);
-            setError('Erro ao excluir alerta. Tente novamente.');
+            setError('Erro ao excluir alerta. Tente novamente.' as any);
         } finally {
             setIsDeleting(false);
         }
