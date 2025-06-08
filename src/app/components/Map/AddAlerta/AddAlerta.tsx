@@ -9,7 +9,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { findByEmail, createUser } from '@/app/services/userService';
 import { createAlerta } from '@/app/services/alertaService';
 import 'leaflet/dist/leaflet.css';
-import axios from 'axios';
 
 interface LocationMarkerProps {
   position: [number, number] | null;
@@ -73,7 +72,8 @@ export default function AddAlerta() {
       try {
         usuario = await findByEmail(userEmail);
       } catch (error: unknown) {
-        if (error && typeof error === 'object' && 'isAxiosError' in error && (error as any).isAxiosError && (error as any).response?.status !== 404) {
+        const err = error as { [key: string]: any };
+        if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError && err.response?.status !== 404) {
           throw error;
         }
       }
@@ -87,8 +87,9 @@ export default function AddAlerta() {
             tipoUsuario: userRole
           });
         } catch (error: unknown) {
-          if (error && typeof error === 'object' && 'isAxiosError' in error && (error as any).isAxiosError && (error as any).response?.data?.message) {
-            throw new Error((error as any).response.data.message);
+          const err = error as { [key: string]: any };
+          if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError && err.response?.data?.message) {
+            throw new Error(err.response.data.message);
           }
           throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
         }
