@@ -28,12 +28,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
   httpAgentOptions: {
     keepAlive: true,
-    timeout: 60000,
   },
 };
 

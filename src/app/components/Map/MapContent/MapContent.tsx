@@ -8,7 +8,6 @@ import Image from 'next/image';
 import { AlertaINMET, PontoDeRisco } from '@/app/utils/types';
 import {
   center,
-  configureDefaultIcon,
   getIconForRiskLevel,
   extrairUF,
   extrairPrimeiroMunicipio,
@@ -149,7 +148,7 @@ export default function MapComponent() {
         try {
           data = JSON.parse(text);
           // Limpa as referências circulares
-          const cleanData = data.map((alerta: any) => ({
+          const cleanData = data.map((alerta: AlertaLocal) => ({
             id: alerta.id,
             titulo: alerta.titulo,
             descricao: alerta.descricao,
@@ -170,7 +169,7 @@ export default function MapComponent() {
           console.log('Alertas locais carregados:', cleanData);
           setAlertasLocais(cleanData);
         } catch (parseError) {
-          console.error('Erro ao fazer parse do JSON:', text);
+          console.error('Erro ao fazer parse do JSON:', text, parseError);
           throw new Error('Resposta inválida do servidor');
         }
       } catch (err) {

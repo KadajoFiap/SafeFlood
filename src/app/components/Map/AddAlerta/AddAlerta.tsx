@@ -71,8 +71,9 @@ export default function AddAlerta() {
       let usuario = null;
       try {
         usuario = await findByEmail(userEmail);
-      } catch (error) {
-        if ((error as any).response?.status !== 404) {
+      } catch (error: unknown) {
+        // Type guard para AxiosError
+        if (typeof error === 'object' && error !== null && 'response' in error && (error as any).response?.status !== 404) {
           throw error;
         }
       }
@@ -85,9 +86,9 @@ export default function AddAlerta() {
             email: userEmail,
             tipoUsuario: userRole
           });
-        } catch (error: any) {
-          if (error.response?.data?.message) {
-            throw new Error(error.response.data.message);
+        } catch (error: unknown) {
+          if (typeof error === 'object' && error !== null && 'response' in error && (error as any).response?.data?.message) {
+            throw new Error((error as any).response.data.message);
           }
           throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
         }
