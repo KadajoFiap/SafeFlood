@@ -7,14 +7,14 @@ export default function Features() {
             title: 'Previsão de Enchentes com IA',
             description: 'Antecipe riscos com nosso modelo de machine learning treinado em dados meteorológicos e hidrológicos. A plataforma classifica o risco de enchente como alto, médio ou baixo nas próximas 24 horas, ajudando no planejamento e prevenção.',
             linkText: 'Ver mais sobre o modelo de IA',
-            linkHref: '#'
+            linkHref: '/sobre'
         },
         {
             imageSrc: '/mapa.jpg',
             title: 'Alerta Geolocalizado em Tempo Real',
             description: 'Envie e visualize alertas automáticos baseados na localização dos sensores IoT espalhados pela cidade. A população é notificada imediatamente via app ou SMS, com rotas de fuga e recomendações de segurança.',
             linkText: 'Saiba como os alertas funcionam',
-            linkHref: '#'
+            linkHref: '/sobre'
         },
         {
             imageSrc: '/dashboard.png',
