@@ -9,7 +9,6 @@ export default function Menu() {
     const rotas = [
         { nome: "Riscos e rotas de fuga", href: "/riscos" },
         { nome: "Sobre", href: "/sobre" },
-        { nome: "Entre em contato", href: "/contato" },
         { nome: "Integrantes", href: "/integrantes" },
         ...(isAdmin ? [{ nome: "Painel", href: "/painel" }] : [])
     ];
