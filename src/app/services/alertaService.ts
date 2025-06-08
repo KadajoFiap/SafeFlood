@@ -22,9 +22,22 @@ export const createAlerta = async (alertaData: Alerta): Promise<Alerta> => {
     return response.data;
   } catch (error: unknown) {
     console.error('Erro ao criar alerta:', error);
-    const err = error as { [key: string]: any };
-    if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError && err.response?.data?.message) {
-      throw new Error(err.response.data.message);
+    const err = error as Record<string, unknown>;
+    if (
+      error &&
+      typeof error === 'object' &&
+      'isAxiosError' in error &&
+      err.isAxiosError === true &&
+      typeof err.response === 'object' &&
+      err.response &&
+      'data' in err.response &&
+      (err.response as Record<string, unknown>).data &&
+      typeof (err.response as Record<string, unknown>).data === 'object' &&
+      'message' in ((err.response as Record<string, unknown>).data as Record<string, unknown>)
+    ) {
+      throw new Error(
+        ((err.response as Record<string, unknown>).data as { message: string }).message
+      );
     }
     throw new Error('Erro ao criar alerta. Por favor, tente novamente.');
   }

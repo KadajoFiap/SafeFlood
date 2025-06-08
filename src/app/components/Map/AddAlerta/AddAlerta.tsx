@@ -72,8 +72,17 @@ export default function AddAlerta() {
       try {
         usuario = await findByEmail(userEmail);
       } catch (error: unknown) {
-        const err = error as { [key: string]: any };
-        if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError && err.response?.status !== 404) {
+        const err = error as Record<string, unknown>;
+        if (
+          error &&
+          typeof error === 'object' &&
+          'isAxiosError' in error &&
+          err.isAxiosError === true &&
+          typeof err.response === 'object' &&
+          err.response &&
+          'status' in err.response &&
+          (err.response as Record<string, unknown>).status !== 404
+        ) {
           throw error;
         }
       }
@@ -87,9 +96,22 @@ export default function AddAlerta() {
             tipoUsuario: userRole
           });
         } catch (error: unknown) {
-          const err = error as { [key: string]: any };
-          if (error && typeof error === 'object' && 'isAxiosError' in error && err.isAxiosError && err.response?.data?.message) {
-            throw new Error(err.response.data.message);
+          const err = error as Record<string, unknown>;
+          if (
+            error &&
+            typeof error === 'object' &&
+            'isAxiosError' in error &&
+            err.isAxiosError === true &&
+            typeof err.response === 'object' &&
+            err.response &&
+            'data' in err.response &&
+            (err.response as Record<string, unknown>).data &&
+            typeof (err.response as Record<string, unknown>).data === 'object' &&
+            'message' in ((err.response as Record<string, unknown>).data as Record<string, unknown>)
+          ) {
+            throw new Error(
+              ((err.response as Record<string, unknown>).data as { message: string }).message
+            );
           }
           throw new Error('Erro ao criar usuário. Por favor, tente novamente.');
         }
