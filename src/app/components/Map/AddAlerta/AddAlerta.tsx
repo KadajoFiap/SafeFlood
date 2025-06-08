@@ -119,7 +119,7 @@ export default function AddAlerta() {
 
       console.log('Dados do alerta sendo enviados:', alertData);
       
-      const response = await fetch('http://localhost:8080/alertas', {
+      const response = await fetch('https://safeflood-api-java.onrender.com/alertas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

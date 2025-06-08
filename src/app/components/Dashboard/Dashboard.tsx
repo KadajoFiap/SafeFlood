@@ -21,14 +21,31 @@ import DashboardContent from "./DashboardContent/DashboardContent";
 
 export default function Dashboard() {
     const [mounted, setMounted] = useState(false);
-    const [pontos, setPontos] = useState<PontoDeRisco[]>([]);
+    const [pontosINMET, setPontosINMET] = useState<PontoDeRisco[]>([]);
+    const [alertasLocais, setAlertasLocais] = useState<any[]>([]);
 
     useEffect(() => {
         setMounted(true);
         async function fetchData() {
-            const res = await fetch('/api/inmet-alertas');
-            const data = await res.json();
-            setPontos(transformarAlertas(data));
+            try {
+                // Busca alertas INMET
+                const inmetRes = await fetch('/api/inmet-alertas');
+                const inmetData = await inmetRes.json();
+                setPontosINMET(transformarAlertas(inmetData));
+
+                // Busca alertas locais
+                const localRes = await fetch('https://safeflood-api-java.onrender.com/alertas', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+                    }
+                });
+                if (localRes.ok) {
+                    const localData = await localRes.json();
+                    setAlertasLocais(localData);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
         }
         fetchData();
     }, []);
@@ -49,7 +66,7 @@ export default function Dashboard() {
             <div className="flex flex-col md:flex-row gap-4 w-full max-w-[1200px]">
                 {/* Dashboard Sidebar */}
                 <div className="w-full md:w-[350px] order-1 md:order-2 overflow-y-auto" style={{ height: 'calc(100vh - 15rem)' }}>
-                    <DashboardContent pontos={pontos} />
+                    <DashboardContent pontos={[...pontosINMET, ...alertasLocais]} />
                 </div>
                 {/* Mapa */}
                 <div className="flex-1 order-2 md:order-1">

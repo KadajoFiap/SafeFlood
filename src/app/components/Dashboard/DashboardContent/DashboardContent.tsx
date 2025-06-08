@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
-import Image from 'next/image';
-import { PontoDeRisco } from '@/app/utils/transformarAlertas';
+import { PontoDeRisco } from '@/app/utils/types';
 
 const getNivelRiscoCor = (nivel: 'Alto' | 'Médio' | 'Baixo') => {
   switch (nivel) {
@@ -11,124 +10,172 @@ const getNivelRiscoCor = (nivel: 'Alto' | 'Médio' | 'Baixo') => {
   }
 };
 
-export default function DashboardContent({ pontos }: { pontos: PontoDeRisco[] }) {
-  const [filtroNivel, setFiltroNivel] = useState<'Todos' | 'Alto' | 'Médio' | 'Baixo'>('Todos');
-  const [filtroPeriodo, setFiltroPeriodo] = useState<'Ativos' | 'Passados' | 'Todos'>('Ativos');
+interface DashboardContentProps {
+    pontos: (PontoDeRisco | any)[];
+}
 
-  const agora = new Date();
-  const pontosFiltrados = pontos.filter(ponto => {
-    const inicio = new Date(ponto.inicio);
-    const fim = new Date(ponto.fim);
-    const estaAtivo = inicio <= agora && fim >= agora;
-    const nivelCorreto = filtroNivel === 'Todos' || ponto.nivel === filtroNivel;
-    const periodoCorreto = filtroPeriodo === 'Todos' ||
-      (filtroPeriodo === 'Ativos' && estaAtivo) ||
-      (filtroPeriodo === 'Passados' && !estaAtivo);
-    return nivelCorreto && periodoCorreto;
-  });
+export default function DashboardContent({ pontos }: DashboardContentProps) {
+    const [filtroNivel, setFiltroNivel] = useState<'Todos' | 'Alto' | 'Médio' | 'Baixo'>('Todos');
+    const [filtroPeriodo, setFiltroPeriodo] = useState<'Ativos' | 'Passados' | 'Todos'>('Ativos');
 
-  const estatisticas = {
-    total: pontos.length,
-    ativos: pontos.filter(p => new Date(p.inicio) <= agora && new Date(p.fim) >= agora).length,
-    alto: pontos.filter(p => p.nivel === 'Alto').length,
-    medio: pontos.filter(p => p.nivel === 'Médio').length,
-    baixo: pontos.filter(p => p.nivel === 'Baixo').length
-  };
+    const agora = new Date();
 
-  return (
-    <div className="h-full bg-white rounded-lg shadow-lg border-2 border-[#F5FAFF] flex flex-col">
-      <div className="p-4 space-y-4 overflow-y-auto flex-1">
-        {/* Estatísticas */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <h3 className="text-xs font-medium text-gray-500">Total de Alertas</h3>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">{estatisticas.total}</p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <h3 className="text-xs font-medium text-gray-500">Alertas Ativos</h3>
-            <p className="mt-1 text-2xl font-semibold text-blue-600">{estatisticas.ativos}</p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <h3 className="text-xs font-medium text-gray-500">Risco Alto</h3>
-            <p className="mt-1 text-2xl font-semibold text-red-600">{estatisticas.alto}</p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <h3 className="text-xs font-medium text-gray-500">Risco Médio</h3>
-            <p className="mt-1 text-2xl font-semibold text-orange-600">{estatisticas.medio}</p>
-          </div>
-        </div>
-        {/* Filtros */}
-        <div className="bg-gray-50 p-3 rounded-lg space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Nível de Risco</label>
-            <select
-              value={filtroNivel}
-              onChange={(e) => setFiltroNivel(e.target.value as 'Todos' | 'Alto' | 'Médio' | 'Baixo')}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-            >
-              <option value="Todos">Todos</option>
-              <option value="Alto">Alto</option>
-              <option value="Médio">Médio</option>
-              <option value="Baixo">Baixo</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Período</label>
-            <select
-              value={filtroPeriodo}
-              onChange={(e) => setFiltroPeriodo(e.target.value as 'Todos' | 'Ativos' | 'Passados')}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-            >
-              <option value="Todos">Todos</option>
-              <option value="Ativos">Ativos</option>
-              <option value="Passados">Passados</option>
-            </select>
-          </div>
-        </div>
-        {/* Lista de Alertas */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-900 px-1">
-            Alertas Meteorológicos
-          </h3>
-          <div className="space-y-2">
-            {pontosFiltrados.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
-                Nenhum alerta encontrado com os filtros selecionados
-              </div>
-            ) : (
-              pontosFiltrados.map((ponto: PontoDeRisco, idx: number) => (
-                <div key={`${ponto.id}-${ponto.latitude}-${ponto.longitude}-${idx}`} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-start gap-2">
-                    <Image
-                      src={`/risco_${ponto.nivel.toLowerCase()}.png`}
-                      alt={`Risco ${ponto.nivel}`}
-                      width={24}
-                      height={24}
-                      className="w-6 h-6 flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {ponto.municipio} - {ponto.uf}
-                        </h4>
-                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getNivelRiscoCor(ponto.nivel)} flex-shrink-0`}>
-                          {ponto.nivel}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-gray-600 line-clamp-2">{ponto.descricao}</p>
-                      <div className="mt-2 text-xs text-gray-500">
-                        <span>Início: {new Date(ponto.inicio).toLocaleString('pt-BR')}</span>
-                        <span className="mx-1">•</span>
-                        <span>Fim: {new Date(ponto.fim).toLocaleString('pt-BR')}</span>
-                      </div>
+    const pontosFiltrados = pontos.filter(ponto => {
+        const dataInicio = new Date(ponto.inicio || ponto.dataInicio);
+        const dataFim = new Date(ponto.fim || ponto.dataFim);
+        const nivel = ponto.nivel || ponto.nivelRisco || ponto.severidade;
+        
+        const periodoCorreto = 
+            filtroPeriodo === 'Todos' ||
+            (filtroPeriodo === 'Ativos' && dataInicio <= agora && dataFim >= agora) ||
+            (filtroPeriodo === 'Passados' && dataFim < agora);
+
+        const nivelCorreto = 
+            filtroNivel === 'Todos' ||
+            (filtroNivel === 'Alto' && (nivel === 'Alto' || nivel === 'Perigo Potencial')) ||
+            (filtroNivel === 'Médio' && (nivel === 'Médio' || nivel === 'Atenção')) ||
+            (filtroNivel === 'Baixo' && (nivel === 'Baixo' || nivel === 'Observação'));
+
+        return periodoCorreto && nivelCorreto;
+    });
+
+    const estatisticas = {
+        total: pontos.length,
+        ativos: pontos.filter(p => {
+            const dataInicio = new Date(p.inicio || p.dataInicio);
+            const dataFim = new Date(p.fim || p.dataFim);
+            return dataInicio <= agora && dataFim >= agora;
+        }).length,
+        alto: pontos.filter(p => 
+            (p.nivel === 'Alto' || p.nivelRisco === 'Alto') || 
+            (p.severidade === 'Perigo Potencial')
+        ).length,
+        medio: pontos.filter(p => 
+            (p.nivel === 'Médio' || p.nivelRisco === 'Médio') || 
+            (p.severidade === 'Atenção')
+        ).length,
+        baixo: pontos.filter(p => 
+            (p.nivel === 'Baixo' || p.nivelRisco === 'Baixo') || 
+            (p.severidade === 'Observação')
+        ).length,
+        inmet: pontos.filter(p => p.severidade).length,
+        locais: pontos.filter(p => p.nivelRisco).length
+    };
+
+    return (
+        <div className="space-y-4 lg:pr-4">
+            {/* Estatísticas */}
+            <div className="bg-white rounded-lg shadow-lg p-4">
+                <h2 className="text-xl font-semibold mb-4">Estatísticas de Alertas</h2>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-red-50 p-4 rounded-lg">
+                        <h3 className="text-red-800 font-medium">Alto Risco</h3>
+                        <p className="text-2xl font-bold text-red-600">{estatisticas.alto}</p>
                     </div>
-                  </div>
+                    <div className="bg-orange-50 p-4 rounded-lg">
+                        <h3 className="text-orange-800 font-medium">Médio Risco</h3>
+                        <p className="text-2xl font-bold text-orange-600">{estatisticas.medio}</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="text-green-800 font-medium">Baixo Risco</h3>
+                        <p className="text-2xl font-bold text-green-600">{estatisticas.baixo}</p>
+                    </div>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="text-blue-800 font-medium">Total</h3>
+                        <p className="text-2xl font-bold text-blue-600">{estatisticas.total}</p>
+                    </div>
                 </div>
-              ))
-            )}
-          </div>
+            </div>
+
+            {/* Distribuição por Fonte */}
+            <div className="bg-white rounded-lg shadow-lg p-4">
+                <h2 className="text-xl font-semibold mb-4">Distribuição por Fonte</h2>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                        <h3 className="text-blue-800 font-medium">Alertas INMET</h3>
+                        <p className="text-2xl font-bold text-blue-600">{estatisticas.inmet}</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                        <h3 className="text-green-800 font-medium">Alertas dos Usuários</h3>
+                        <p className="text-2xl font-bold text-green-600">{estatisticas.locais}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="bg-white rounded-lg shadow-lg p-4">
+                <h2 className="text-xl font-semibold mb-4">Filtros</h2>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nível de Risco</label>
+                        <select
+                            value={filtroNivel}
+                            onChange={(e) => setFiltroNivel(e.target.value as any)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                            <option value="Todos">Todos</option>
+                            <option value="Alto">Alto</option>
+                            <option value="Médio">Médio</option>
+                            <option value="Baixo">Baixo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                        <select
+                            value={filtroPeriodo}
+                            onChange={(e) => setFiltroPeriodo(e.target.value as any)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                            <option value="Todos">Todos</option>
+                            <option value="Ativos">Ativos</option>
+                            <option value="Passados">Passados</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* Lista de Alertas */}
+            <div className="bg-white rounded-lg shadow-lg p-4">
+                <h2 className="text-xl font-semibold mb-4">Alertas ({pontosFiltrados.length})</h2>
+                <div className="space-y-4">
+                    {pontosFiltrados.map((ponto, index) => {
+                        const nivel = ponto.nivel || ponto.nivelRisco || ponto.severidade;
+                        const descricao = ponto.descricao || ponto.titulo;
+                        const dataInicio = new Date(ponto.inicio || ponto.dataInicio);
+                        const dataFim = new Date(ponto.fim || ponto.dataFim);
+                        const isAtivo = dataInicio <= agora && dataFim >= agora;
+
+                        return (
+                            <div key={index} className="border rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-medium">{descricao}</h3>
+                                        <p className="text-sm text-gray-500">
+                                            {ponto.municipio} - {ponto.uf}
+                                        </p>
+                                    </div>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        nivel === 'Alto' || nivel === 'Perigo Potencial' ? 'bg-red-100 text-red-800' :
+                                        nivel === 'Médio' || nivel === 'Atenção' ? 'bg-orange-100 text-orange-800' :
+                                        'bg-green-100 text-green-800'
+                                    }`}>
+                                        {nivel}
+                                    </span>
+                                </div>
+                                <div className="mt-2 text-sm text-gray-600">
+                                    <p>Início: {dataInicio.toLocaleDateString('pt-BR')}</p>
+                                    <p>Fim: {dataFim.toLocaleDateString('pt-BR')}</p>
+                                    <p className={`mt-1 ${
+                                        isAtivo ? 'text-green-600' : 'text-gray-500'
+                                    }`}>
+                                        {isAtivo ? 'Ativo' : 'Expirado'}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

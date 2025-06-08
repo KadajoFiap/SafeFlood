@@ -110,7 +110,7 @@ export default function MapComponent() {
 
     const fetchLocalData = async () => {
       try {
-        const response = await fetch('http://localhost:8080/alertas', {
+        const response = await fetch('https://safeflood-api-java.onrender.com/alertas', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('idToken')}`
           }

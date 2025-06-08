@@ -32,12 +32,41 @@ export default function Painel() {
     const [error, setError] = useState<string | null>(null);
     const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Ativo' | 'Expirado' | 'Cancelado'>('Todos');
     const [filtroNivel, setFiltroNivel] = useState<'Todos' | 'Alto' | 'Médio' | 'Baixo'>('Todos');
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Tem certeza que deseja excluir este alerta?')) {
+            return;
+        }
+
+        try {
+            setIsDeleting(true);
+            const response = await fetch(`https://safeflood-api-java.onrender.com/alertas/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('idToken')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao excluir alerta');
+            }
+
+            // Atualiza a lista de alertas removendo o alerta excluído
+            setAlertas(alertas.filter(alerta => alerta.id !== id));
+        } catch (err) {
+            console.error('Erro ao excluir alerta:', err);
+            setError('Erro ao excluir alerta. Tente novamente.');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchAlertas = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://localhost:8080/alertas', {
+                const response = await fetch('https://safeflood-api-java.onrender.com/alertas', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('idToken')}`
                     }
@@ -219,8 +248,13 @@ export default function Painel() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <button className="text-blue-600 hover:text-blue-900 mr-3">Editar</button>
-                                                    <button className="text-red-600 hover:text-red-900">Excluir</button>
+                                                    <button 
+                                                        onClick={() => handleDelete(alerta.id)}
+                                                        disabled={isDeleting}
+                                                        className={`text-red-600 hover:text-red-900 ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        {isDeleting ? 'Excluindo...' : 'Excluir'}
+                                                    </button>
                                                 </td>
                                             </tr>
                                         );
