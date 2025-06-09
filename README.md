@@ -40,6 +40,10 @@ O projeto visa fornecer uma solução completa para:
 - Monitoramento de ocorrências
 - Relatórios e análises
 
+#### Credenciais para logar como admin - uma aba de painel será exibida no Menu do Header
+- username: fezanni
+- senha: 31201810Kk!
+
 ### 📱 Páginas Principais
 - Homepage com mapa interativo
 - Página de login e registro
