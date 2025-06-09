@@ -60,7 +60,7 @@ export default function Register() {
       console.log('[Registro] Iniciando registro com dados:', { username: data.username, email: data.email });
       await register(data.username, data.email, data.password);
       console.log('[Registro] Registro bem-sucedido, redirecionando para confirmação de email.');
-      router.push('/');
+      router.push('/confirm-email');
     } catch (err) {
       console.error('[Registro] Erro ao registrar:', err);
       const errorMsg = (typeof err === 'object' && err && 'message' in err && typeof (err as { message?: string }).message === 'string')

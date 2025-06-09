@@ -75,3 +75,8 @@ NEXT_PUBLIC_API_BASE_URL=https://safeflood-api-java.onrender.com
 
 4. Inicie o servidor de desenvolvimento:
 ```
+
+## Links
+
+Link video YouTube -
+Link Verce - https://safe-flood.vercel.app
