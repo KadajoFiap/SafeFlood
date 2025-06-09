@@ -57,7 +57,7 @@ O projeto visa fornecer uma solução completa para:
 
 1. Clone o repositório:
 ```bash
-git clone [URL_DO_REPOSITÓRIO]
+git clone [https://github.com/KadajoFiap/SafeFlood.git]
 ```
 
 2. Instale as dependências:
