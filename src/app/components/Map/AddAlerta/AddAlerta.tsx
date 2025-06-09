@@ -243,8 +243,8 @@ export default function AddAlerta() {
       </Button>
 
       {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-start md:items-center justify-center z-[2000] px-6 py-10 md:p-0 overflow-y-auto">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-10 md:mt-0 md:p-6 w-full max-w-4xl mb-10 md:mb-0">
+        <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-start md:items-center justify-center z-[9999] px-6 py-10 md:p-0 overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-10 md:mt-0 md:p-6 w-full max-w-4xl mb-10 md:mb-0 relative">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg md:text-xl font-semibold">Adicionar Novo Alerta</h2>
               <button
