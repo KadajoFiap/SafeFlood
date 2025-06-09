@@ -78,5 +78,5 @@ NEXT_PUBLIC_API_BASE_URL=https://safeflood-api-java.onrender.com
 
 ## Links
 
-Link video YouTube -
-Link Verce - https://safe-flood.vercel.app
+Link video YouTube - https://youtu.be/PVd4P4-381w
+Link Vercel - https://safe-flood.vercel.app
