@@ -41,8 +41,8 @@ O projeto visa fornecer uma solução completa para:
 - Relatórios e análises
 
 #### Credenciais para logar como admin - uma aba de painel será exibida no Menu do Header
-- username: fezanni
-- senha: 31201810Kk!
+- username: kauesamartino
+- senha: Senha!123
 
 ### 📱 Páginas Principais
 - Homepage com mapa interativo
