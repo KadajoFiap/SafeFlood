@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Button from '@/app/components/Button/Button';
@@ -209,6 +209,17 @@ export default function AddAlerta() {
     }
   ];
 
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.classList.add('add-alerta-modal-open');
+    } else {
+      document.body.classList.remove('add-alerta-modal-open');
+    }
+    return () => {
+      document.body.classList.remove('add-alerta-modal-open');
+    };
+  }, [isModalOpen]);
+
   return (
     <>
       <Button
@@ -232,17 +243,17 @@ export default function AddAlerta() {
       </Button>
 
       {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center z-[2000]">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 w-full max-w-4xl">
+        <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-start md:items-center justify-center z-[2000] px-6 py-10 md:p-0 overflow-y-auto">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-10 md:mt-0 md:p-6 w-full max-w-4xl mb-10 md:mb-0">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Adicionar Novo Alerta</h2>
+              <h2 className="text-lg md:text-xl font-semibold">Adicionar Novo Alerta</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
+                  className="h-5 w-5 md:h-6 md:w-6"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -258,13 +269,13 @@ export default function AddAlerta() {
             </div>
 
             {error && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
+              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm md:text-base">
                 {error}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="h-[400px] rounded-lg overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="h-[300px] md:h-[400px] rounded-lg overflow-hidden">
                 <MapContainer
                   center={[-15.7801, -47.9292]}
                   zoom={4}
@@ -278,7 +289,7 @@ export default function AddAlerta() {
                 </MapContainer>
               </div>
 
-              <div>
+              <div className="mt-4 md:mt-0">
                 <Formulario
                   fields={fields}
                   onSubmit={handleSubmit}

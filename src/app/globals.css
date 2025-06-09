@@ -1,2 +1,6 @@
 @import "tailwindcss";
 
+body.add-alerta-modal-open .header {
+  display: none !important;
+}
+
