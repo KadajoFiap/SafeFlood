@@ -8,6 +8,7 @@ import Formulario, { FormField } from '@/app/components/Formulario/Formulario';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { findByEmail, createUser } from '@/app/services/userService';
 import { createAlerta } from '@/app/services/alertaService';
+import { createPortal } from 'react-dom';
 import 'leaflet/dist/leaflet.css';
 
 interface LocationMarkerProps {
@@ -32,6 +33,11 @@ export default function AddAlerta() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [position, setPosition] = useState<[number, number] | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleAddAlerta = () => {
     if (!isAuthenticated) {
@@ -220,6 +226,71 @@ export default function AddAlerta() {
     };
   }, [isModalOpen]);
 
+  const renderModal = () => {
+    if (!mounted) return null;
+
+    return createPortal(
+      <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-start md:items-center justify-center z-[9999] px-6 py-10 md:p-0 overflow-y-auto">
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-10 md:mt-0 md:p-6 w-full max-w-4xl mb-10 md:mb-0 relative">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold">Adicionar Novo Alerta</h2>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 md:h-6 md:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm md:text-base">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="h-[300px] md:h-[400px] rounded-lg overflow-hidden">
+              <MapContainer
+                center={[-15.7801, -47.9292]}
+                zoom={4}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                <LocationMarker position={position} setPosition={setPosition} />
+              </MapContainer>
+            </div>
+
+            <div className="mt-4 md:mt-0">
+              <Formulario
+                fields={fields}
+                onSubmit={handleSubmit}
+                submitLabel={isSubmitting ? 'Adicionando...' : 'Adicionar Alerta'}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
     <>
       <Button
@@ -242,65 +313,7 @@ export default function AddAlerta() {
         Adicionar Alerta
       </Button>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-start md:items-center justify-center z-[9999] px-6 py-10 md:p-0 overflow-y-auto">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mt-10 md:mt-0 md:p-6 w-full max-w-4xl mb-10 md:mb-0 relative">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg md:text-xl font-semibold">Adicionar Novo Alerta</h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 md:h-6 md:w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {error && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm md:text-base">
-                {error}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div className="h-[300px] md:h-[400px] rounded-lg overflow-hidden">
-                <MapContainer
-                  center={[-15.7801, -47.9292]}
-                  zoom={4}
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  />
-                  <LocationMarker position={position} setPosition={setPosition} />
-                </MapContainer>
-              </div>
-
-              <div className="mt-4 md:mt-0">
-                <Formulario
-                  fields={fields}
-                  onSubmit={handleSubmit}
-                  submitLabel={isSubmitting ? 'Adicionando...' : 'Adicionar Alerta'}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {isModalOpen && renderModal()}
     </>
   );
 }
